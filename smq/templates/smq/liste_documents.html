@@ -1,0 +1,1239 @@
+
+{% extends 'smq/base.html' %}
+
+{% block title %}Documents - QualiCampus{% endblock %}
+
+{% block content %}
+
+<style>
+    .document-readonly-note,
+    .document-result-count {
+        margin-left: auto;
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .document-details {
+        margin-top: 8px;
+        max-width: 540px;
+    }
+
+    .document-details summary {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #2563eb;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        list-style: none;
+    }
+
+    .document-details summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .document-details summary::before {
+        content: '▸';
+    }
+
+    .document-details[open] summary::before {
+        content: '▾';
+    }
+
+    .document-details summary:focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 3px;
+        border-radius: 3px;
+    }
+
+    .document-details-content {
+        margin-top: 9px;
+        padding: 12px 14px;
+        border: 1px solid #e2e8f0;
+        border-radius: 9px;
+        background: #f8fafc;
+        color: #334155;
+        font-size: 13px;
+        line-height: 1.55;
+        overflow-wrap: anywhere;
+    }
+
+    .document-details-content p {
+        margin: 0 0 8px;
+    }
+
+    .document-details-content p:last-child {
+        margin-bottom: 0;
+    }
+
+    .document-details-content strong {
+        color: #0f172a;
+    }
+
+    .document-row[hidden],
+    .document-filter-empty[hidden] {
+        display: none !important;
+    }
+
+    /* NOUVEAU : BOUTON MODIFIER */
+    .document-edit-action {
+        color: #2563eb;
+        background: #eff6ff;
+    }
+
+    .document-edit-action:hover {
+        color: #1d4ed8;
+        background: #dbeafe;
+    }
+
+    /* MODALE DE CONFIRMATION */
+    #documentActionModal .document-delete-dialog {
+        position: relative;
+        width: 420px;
+        max-width: calc(100vw - 32px);
+        padding: 30px;
+        background: #fff;
+        border: 1px solid #e7ebf1;
+        border-radius: 14px;
+        box-shadow: 0 20px 50px rgba(17, 41, 67, .16);
+        text-align: center;
+    }
+
+    #documentActionModal .document-delete-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 24px;
+    }
+
+    #documentActionModal .document-delete-cancel,
+    #documentActionModal .document-delete-confirm {
+        min-height: 38px;
+        padding: 0 16px;
+        border-radius: 7px;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    #documentActionModal .document-delete-cancel {
+        color: #64748b;
+        background: #fff;
+        border: 1px solid #dce3eb;
+    }
+
+    #documentActionModal .document-delete-confirm {
+        color: #fff;
+        background: #2563eb;
+        border: 1px solid #2563eb;
+    }
+
+    #documentActionModal .document-delete-confirm.is-danger {
+        background: #be123c;
+        border-color: #be123c;
+    }
+
+    #documentActionModal .document-delete-confirm.is-success {
+        background: #23936f;
+        border-color: #23936f;
+    }
+
+    @media (max-width: 500px) {
+        #documentActionModal .document-delete-dialog {
+            padding: 25px 18px;
+        }
+
+        #documentActionModal .document-delete-actions {
+            flex-direction: column-reverse;
+        }
+
+        #documentActionModal .document-delete-actions > button,
+        #documentActionModal .document-delete-actions > form,
+        #documentActionModal .document-delete-confirm {
+            width: 100%;
+        }
+    }
+</style>
+
+{% with role=request.user.profil_smq.role %}
+
+<!-- ======================================================
+     EN-TÊTE
+====================================================== -->
+
+<section class="document-page-header">
+
+    <div class="document-title-group">
+
+        <div class="document-title-icon">
+            <svg viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="1.8"
+                 aria-hidden="true">
+                <path d="M6 2h8l4 4v16H6z"></path>
+                <path d="M14 2v5h5"></path>
+                <path d="M9 12h6"></path>
+                <path d="M9 16h6"></path>
+            </svg>
+        </div>
+
+        <h1>Documents</h1>
+
+    </div>
+
+    {% if role == 'ADMIN' %}
+        <span class="document-readonly-note">
+            Consultation uniquement
+        </span>
+    {% endif %}
+
+    {% if role == 'RESP_QUALITE' or role == 'PILOTE' or role == 'CONTRIBUTEUR' %}
+        <a href="{% url 'creer_document' %}"
+           class="module-primary-button">
+            <span class="button-plus">+</span>
+            Nouveau document
+        </a>
+    {% endif %}
+
+</section>
+
+
+<!-- ======================================================
+     RECHERCHE ET FILTRES
+====================================================== -->
+
+<section class="document-filters">
+
+    <div class="document-search">
+
+        <svg viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="1.8"
+             aria-hidden="true">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="M20 20l-4-4"></path>
+        </svg>
+
+        <input type="search"
+               id="documentSearch"
+               placeholder="Rechercher un document, un auteur, un processus..."
+               aria-label="Rechercher un document"
+               autocomplete="off">
+
+    </div>
+
+    <div class="document-filter-field">
+        <label for="documentProcessFilter">
+            Processus
+        </label>
+
+        <select id="documentProcessFilter">
+            <option value="">Tous les processus</option>
+        </select>
+    </div>
+
+    <div class="document-filter-field">
+        <label for="documentTypeFilter">
+            Type de document
+        </label>
+
+        <select id="documentTypeFilter">
+            <option value="">Tous les types</option>
+        </select>
+    </div>
+
+    <div class="document-filter-field">
+        <label for="documentStatusFilter">
+            Statut
+        </label>
+
+        <select id="documentStatusFilter">
+            <option value="">Tous les statuts</option>
+            <option value="brouillon">Brouillon</option>
+            <option value="en_validation">En validation</option>
+            <option value="valide">Validé</option>
+            <option value="publie">Publié</option>
+        </select>
+    </div>
+
+    <button type="button"
+            class="document-filter-reset"
+            id="documentResetFilters">
+
+        <svg viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="1.8"
+             aria-hidden="true">
+            <path d="M4 5h16l-6 7v5l-4 2v-7z"></path>
+        </svg>
+
+        Réinitialiser
+    </button>
+
+</section>
+
+
+<!-- ======================================================
+     LISTE DES DOCUMENTS
+====================================================== -->
+
+<section class="document-list-card">
+
+    <div class="document-list-heading">
+
+        <h2>Liste des documents</h2>
+
+        <span id="documentResultCount"
+              class="document-result-count"
+              role="status"
+              aria-live="polite">
+            {{ documents|length }}
+            document{{ documents|length|pluralize }}
+        </span>
+
+    </div>
+
+    {% if documents %}
+
+    <div class="document-table-wrapper">
+
+        <table class="document-table">
+
+            <thead>
+                <tr>
+                    <th class="document-number-column">#</th>
+                    <th>Titre</th>
+                    <th>Processus</th>
+                    <th>Type</th>
+                    <th>Version</th>
+                    <th>Statut</th>
+                    <th>Date</th>
+                    <th class="document-actions-column">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for document in documents %}
+
+                <tr class="document-row"
+                    data-search="{{ document.titre }} {{ document.description }} {{ document.processus.nom }} {{ document.get_type_display }} {{ document.get_statut_display }} {% if document.auteur %}{{ document.auteur.prenom }} {{ document.auteur.nom }}{% endif %}"
+                    data-process="{{ document.processus.nom|lower }}"
+                    data-process-label="{{ document.processus.nom }}"
+                    data-type="{{ document.type|lower }}"
+                    data-type-label="{{ document.get_type_display }}"
+                    data-status="{{ document.statut|lower }}">
+
+                    <!-- NUMÉRO -->
+                    <td class="document-number">
+                        {{ forloop.counter }}
+                    </td>
+
+                    <!-- TITRE ET DÉTAILS -->
+                    <td>
+
+                        <div class="document-name-cell">
+
+                            <div class="document-row-icon">
+
+                                <svg viewBox="0 0 24 24"
+                                     fill="none"
+                                     stroke="currentColor"
+                                     stroke-width="1.8"
+                                     aria-hidden="true">
+                                    <path d="M6 2h8l4 4v16H6z"></path>
+                                    <path d="M14 2v5h5"></path>
+                                    <path d="M9 12h6"></path>
+                                    <path d="M9 16h6"></path>
+                                </svg>
+
+                            </div>
+
+                            <div class="document-name-info">
+
+                                <strong>
+                                    {{ document.titre }}
+                                </strong>
+
+                                {% if document.description %}
+                                    <span>
+                                        {{ document.description|truncatechars:55 }}
+                                    </span>
+                                {% endif %}
+
+                                <details class="document-details">
+
+                                    <summary>
+                                        Voir les détails
+                                    </summary>
+
+                                    <div class="document-details-content">
+
+                                        <p>
+                                            <strong>Titre :</strong>
+                                            {{ document.titre }}
+                                        </p>
+
+                                        <p>
+                                            <strong>Description :</strong>
+                                            {{ document.description|default:"Aucune description"|linebreaksbr }}
+                                        </p>
+
+                                        <p>
+                                            <strong>Processus :</strong>
+                                            {{ document.processus.nom }}
+                                        </p>
+
+                                        <p>
+                                            <strong>Type :</strong>
+                                            {{ document.get_type_display }}
+                                        </p>
+
+                                        <p>
+                                            <strong>Auteur :</strong>
+
+                                            {% if document.auteur %}
+                                                {{ document.auteur.prenom }}
+                                                {{ document.auteur.nom }}
+                                            {% else %}
+                                                Non renseigné
+                                            {% endif %}
+                                        </p>
+
+                                        <p>
+                                            <strong>Dernière version :</strong>
+
+                                            {% if document.derniere_version %}
+                                                {{ document.derniere_version.numero_version }}
+                                            {% else %}
+                                                Aucune version
+                                            {% endif %}
+                                        </p>
+
+                                        <p>
+                                            <strong>Statut :</strong>
+                                            {{ document.get_statut_display }}
+                                        </p>
+
+                                        <p>
+                                            <strong>Date :</strong>
+
+                                            {% if document.derniere_date %}
+                                                {{ document.derniere_date|date:"d/m/Y" }}
+                                            {% else %}
+                                                {{ document.date_creation|date:"d/m/Y" }}
+                                            {% endif %}
+                                        </p>
+
+                                        <p>
+                                            <a href="{% url 'liste_versions_document' document.id %}">
+                                                Consulter les versions
+                                            </a>
+                                        </p>
+
+                                    </div>
+
+                                </details>
+
+                            </div>
+
+                        </div>
+
+                    </td>
+
+                    <!-- PROCESSUS -->
+                    <td class="document-secondary-text">
+                        {{ document.processus.nom }}
+                    </td>
+
+                    <!-- TYPE -->
+                    <td>
+                        <span class="document-type-badge document-type-{{ document.type|lower }}">
+                            {{ document.get_type_display }}
+                        </span>
+                    </td>
+
+                    <!-- VERSION -->
+                    <td class="document-version">
+
+                        {% if document.derniere_version %}
+                            {{ document.derniere_version.numero_version }}
+                        {% else %}
+                            <span class="document-empty-value">
+                                —
+                            </span>
+                        {% endif %}
+
+                    </td>
+
+                    <!-- STATUT -->
+                    <td>
+
+                        {% if document.statut == 'BROUILLON' %}
+
+                            <span class="document-status document-status-draft">
+                                <span class="document-status-dot"></span>
+                                Brouillon
+                            </span>
+
+                        {% elif document.statut == 'EN_VALIDATION' %}
+
+                            <span class="document-status document-status-validation">
+                                <span class="document-status-dot"></span>
+                                En validation
+                            </span>
+
+                        {% elif document.statut == 'VALIDE' %}
+
+                            <span class="document-status document-status-valid">
+                                <span class="document-status-dot"></span>
+                                Validé
+                            </span>
+
+                        {% elif document.statut == 'PUBLIE' %}
+
+                            <span class="document-status document-status-published">
+                                <span class="document-status-dot"></span>
+                                Publié
+                            </span>
+
+                        {% else %}
+
+                            <span class="document-status">
+                                {{ document.get_statut_display }}
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <!-- DATE -->
+                    <td class="document-secondary-text">
+
+                        {% if document.derniere_date %}
+                            {{ document.derniere_date|date:"d/m/Y" }}
+                        {% else %}
+                            {{ document.date_creation|date:"d/m/Y" }}
+                        {% endif %}
+
+                    </td>
+
+                    <!-- ==================================================
+                         ACTIONS
+                    ================================================== -->
+                    <td>
+
+                        <div class="document-actions">
+
+                            <!-- VOIR LES VERSIONS : TOUS LES RÔLES -->
+                            <a href="{% url 'liste_versions_document' document.id %}"
+                               class="document-action-icon document-view-action"
+                               title="Voir les versions"
+                               aria-label="Voir les versions de {{ document.titre }}">
+
+                                <svg viewBox="0 0 24 24"
+                                     fill="none"
+                                     stroke="currentColor"
+                                     stroke-width="1.8"
+                                     aria-hidden="true">
+                                    <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"></path>
+                                    <circle cx="12" cy="12" r="2.5"></circle>
+                                </svg>
+
+                            </a>
+
+
+                            <!-- ========================================
+                                 DOCUMENT BROUILLON
+                            ======================================== -->
+
+                            {% if document.statut == 'BROUILLON' %}
+
+                                <!-- MODIFIER : RESPONSABLE QUALITÉ -->
+                                {% if role == 'RESP_QUALITE' %}
+
+                                    <a href="{% url 'modifier_document' document.id %}"
+                                       class="document-action-icon document-edit-action"
+                                       title="Modifier les informations"
+                                       aria-label="Modifier {{ document.titre }}">
+
+                                        <svg viewBox="0 0 24 24"
+                                             fill="none"
+                                             stroke="currentColor"
+                                             stroke-width="1.8"
+                                             stroke-linecap="round"
+                                             stroke-linejoin="round"
+                                             aria-hidden="true">
+                                            <path d="M12 20h9"></path>
+                                            <path d="M16.5 3.5a2.1 2.1 0 013 3L8 18l-4 1 1-4z"></path>
+                                        </svg>
+
+                                    </a>
+
+                                {% endif %}
+
+
+                                <!-- AJOUTER VERSION / SOUMETTRE / SUPPRIMER -->
+                                {% if role == 'RESP_QUALITE' or document.auteur == request.user.profil_smq %}
+
+                                    {% if role == 'RESP_QUALITE' or role == 'PILOTE' or role == 'CONTRIBUTEUR' %}
+
+                                        <!-- AJOUTER UNE VERSION -->
+                                        <a href="{% url 'ajouter_version_document' document.id %}"
+                                           class="document-action-icon document-version-action"
+                                           title="Ajouter une version"
+                                           aria-label="Ajouter une version">
+
+                                            <svg viewBox="0 0 24 24"
+                                                 fill="none"
+                                                 stroke="currentColor"
+                                                 stroke-width="1.8"
+                                                 aria-hidden="true">
+                                                <path d="M6 2h8l4 4v16H6z"></path>
+                                                <path d="M14 2v5h5"></path>
+                                                <path d="M12 11v7"></path>
+                                                <path d="M8.5 14.5h7"></path>
+                                            </svg>
+
+                                        </a>
+
+                                        <!-- SOUMETTRE -->
+                                        <button type="button"
+                                                class="document-workflow-button document-submit-validation js-document-action"
+                                                data-action="submit"
+                                                data-url="{% url 'soumettre_document' document.id %}"
+                                                data-title="{{ document.titre }}">
+                                            Soumettre
+                                        </button>
+
+                                        <!-- SUPPRIMER -->
+                                        <button type="button"
+                                                class="document-action-icon document-delete-action js-document-action"
+                                                title="Supprimer le document"
+                                                aria-label="Supprimer {{ document.titre }}"
+                                                data-action="delete"
+                                                data-url="{% url 'supprimer_document' document.id %}"
+                                                data-title="{{ document.titre }}">
+
+                                            <svg viewBox="0 0 24 24"
+                                                 fill="none"
+                                                 stroke="currentColor"
+                                                 stroke-width="1.8"
+                                                 aria-hidden="true">
+                                                <path d="M4 7h16"></path>
+                                                <path d="M9 7V4h6v3"></path>
+                                                <path d="M7 7l1 13h8l1-13"></path>
+                                                <path d="M10 11v5"></path>
+                                                <path d="M14 11v5"></path>
+                                            </svg>
+
+                                        </button>
+
+                                    {% endif %}
+
+                                {% endif %}
+
+                            {% endif %}
+
+
+                            <!-- ========================================
+                                 DOCUMENT EN VALIDATION
+                            ======================================== -->
+
+                            {% if document.statut == 'EN_VALIDATION' and role == 'RESP_QUALITE' %}
+
+                                <!-- DEMANDER UNE MODIFICATION -->
+                                <button type="button"
+                                        class="document-workflow-button document-request-change js-document-action"
+                                        data-action="change"
+                                        data-url="{% url 'demander_modification_document' document.id %}"
+                                        data-title="{{ document.titre }}">
+                                    Demander modification
+                                </button>
+
+                                <!-- VALIDER -->
+                                <button type="button"
+                                        class="document-workflow-button document-validate js-document-action"
+                                        data-action="validate"
+                                        data-url="{% url 'valider_document' document.id %}"
+                                        data-title="{{ document.titre }}">
+                                    Valider
+                                </button>
+
+                            {% endif %}
+
+
+                            <!-- ========================================
+                                 DOCUMENT VALIDÉ
+                            ======================================== -->
+
+                            {% if document.statut == 'VALIDE' and role == 'RESP_QUALITE' %}
+
+                                <button type="button"
+                                        class="document-workflow-button document-publish js-document-action"
+                                        data-action="publish"
+                                        data-url="{% url 'publier_document' document.id %}"
+                                        data-title="{{ document.titre }}">
+                                    Publier
+                                </button>
+
+                            {% endif %}
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <!-- AUCUN RÉSULTAT APRÈS FILTRAGE -->
+    <div class="document-filter-empty"
+         id="documentFilterEmpty"
+         hidden>
+        Aucun document ne correspond à votre recherche
+        ou aux filtres sélectionnés.
+    </div>
+
+
+    {% else %}
+
+    <!-- AUCUN DOCUMENT -->
+    <div class="document-empty-state">
+
+        <div class="document-empty-icon">
+            <svg viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="1.8"
+                 aria-hidden="true">
+                <path d="M6 2h8l4 4v16H6z"></path>
+                <path d="M14 2v5h5"></path>
+            </svg>
+        </div>
+
+        <h3>Aucun document</h3>
+
+        {% if role == 'RESP_QUALITE' or role == 'PILOTE' or role == 'CONTRIBUTEUR' %}
+
+            <a href="{% url 'creer_document' %}"
+               class="module-primary-button">
+                <span class="button-plus">+</span>
+                Nouveau document
+            </a>
+
+        {% endif %}
+
+    </div>
+
+    {% endif %}
+
+</section>
+
+
+<!-- ======================================================
+     MODALE DE CONFIRMATION
+====================================================== -->
+
+{% if role == 'RESP_QUALITE' or role == 'PILOTE' or role == 'CONTRIBUTEUR' %}
+
+<div class="document-delete-modal"
+     id="documentActionModal"
+     aria-hidden="true">
+
+    <div class="document-delete-backdrop"
+         data-document-modal-close>
+    </div>
+
+    <div class="document-delete-dialog"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="documentActionTitle"
+         aria-describedby="documentActionMessage">
+
+        <button type="button"
+                class="document-delete-close"
+                data-document-modal-close
+                aria-label="Fermer">
+            &times;
+        </button>
+
+        <div class="document-delete-icon"
+             aria-hidden="true">
+
+            <svg viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="1.8">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M12 8v5"></path>
+                <path d="M12 16.5h.01"></path>
+            </svg>
+
+        </div>
+
+        <h3 id="documentActionTitle">
+            Confirmer l'action
+        </h3>
+
+        <p id="documentActionMessage"></p>
+
+        <p>
+            <strong id="documentActionName"></strong>
+        </p>
+
+        <div class="document-delete-actions">
+
+            <button type="button"
+                    class="document-delete-cancel"
+                    data-document-modal-close>
+                Annuler
+            </button>
+
+            <form method="post"
+                  id="documentActionForm"
+                  class="document-inline-form">
+
+                {% csrf_token %}
+
+                <button type="submit"
+                        id="documentActionConfirm"
+                        class="document-delete-confirm">
+                    Confirmer
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endif %}
+
+{% endwith %}
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // =====================================================
+    // RECHERCHE ET FILTRES
+    // =====================================================
+
+    const searchInput =
+        document.getElementById('documentSearch');
+
+    const processFilter =
+        document.getElementById('documentProcessFilter');
+
+    const typeFilter =
+        document.getElementById('documentTypeFilter');
+
+    const statusFilter =
+        document.getElementById('documentStatusFilter');
+
+    const resetButton =
+        document.getElementById('documentResetFilters');
+
+    const emptyMessage =
+        document.getElementById('documentFilterEmpty');
+
+    const resultCount =
+        document.getElementById('documentResultCount');
+
+    const rows = Array.from(
+        document.querySelectorAll('.document-row')
+    );
+
+
+    // =====================================================
+    // NORMALISATION
+    // =====================================================
+
+    function normalizeText(value) {
+        return (value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLocaleLowerCase('fr')
+            .trim();
+    }
+
+
+    // =====================================================
+    // REMPLIR LES FILTRES
+    // =====================================================
+
+    function fillFilter(select, entries) {
+
+        if (!select) return;
+
+        Array.from(entries.entries())
+            .sort((a, b) =>
+                a[1].localeCompare(
+                    b[1],
+                    'fr',
+                    { sensitivity: 'base' }
+                )
+            )
+            .forEach(([value, label]) => {
+
+                const option =
+                    document.createElement('option');
+
+                option.value = value;
+                option.textContent = label;
+
+                select.appendChild(option);
+            });
+    }
+
+
+    const processes = new Map();
+    const types = new Map();
+
+    rows.forEach(row => {
+
+        const process =
+            normalizeText(row.dataset.process);
+
+        const type =
+            normalizeText(row.dataset.type);
+
+        if (process && !processes.has(process)) {
+            processes.set(
+                process,
+                row.dataset.processLabel
+            );
+        }
+
+        if (type && !types.has(type)) {
+            types.set(
+                type,
+                row.dataset.typeLabel
+            );
+        }
+    });
+
+    fillFilter(processFilter, processes);
+    fillFilter(typeFilter, types);
+
+
+    // =====================================================
+    // FILTRAGE
+    // =====================================================
+
+    function filterDocuments() {
+
+        const terms = normalizeText(
+            searchInput.value
+        )
+            .split(/\s+/)
+            .filter(Boolean);
+
+        const process =
+            normalizeText(processFilter.value);
+
+        const type =
+            normalizeText(typeFilter.value);
+
+        const status =
+            statusFilter.value;
+
+        let count = 0;
+
+        rows.forEach(row => {
+
+            const searchable =
+                normalizeText(row.dataset.search);
+
+            const matchesSearch = terms.every(
+                term => searchable.includes(term)
+            );
+
+            const matchesProcess =
+                !process ||
+                normalizeText(row.dataset.process) === process;
+
+            const matchesType =
+                !type ||
+                normalizeText(row.dataset.type) === type;
+
+            const matchesStatus =
+                !status ||
+                row.dataset.status === status;
+
+            const visible =
+                matchesSearch &&
+                matchesProcess &&
+                matchesType &&
+                matchesStatus;
+
+            row.hidden = !visible;
+
+            if (visible) {
+                count++;
+            }
+        });
+
+        if (resultCount) {
+            resultCount.textContent =
+                count +
+                (count === 1 ? ' document' : ' documents');
+        }
+
+        if (emptyMessage) {
+            emptyMessage.hidden = count !== 0;
+            emptyMessage.style.display =
+                count === 0 ? 'flex' : 'none';
+        }
+    }
+
+
+    // =====================================================
+    // ÉVÉNEMENTS DES FILTRES
+    // =====================================================
+
+    if (
+        searchInput &&
+        processFilter &&
+        typeFilter &&
+        statusFilter &&
+        resetButton
+    ) {
+
+        searchInput.addEventListener(
+            'input',
+            filterDocuments
+        );
+
+        processFilter.addEventListener(
+            'change',
+            filterDocuments
+        );
+
+        typeFilter.addEventListener(
+            'change',
+            filterDocuments
+        );
+
+        statusFilter.addEventListener(
+            'change',
+            filterDocuments
+        );
+
+        resetButton.addEventListener(
+            'click',
+            function () {
+
+                searchInput.value = '';
+                processFilter.value = '';
+                typeFilter.value = '';
+                statusFilter.value = '';
+
+                filterDocuments();
+                searchInput.focus();
+            }
+        );
+
+        filterDocuments();
+    }
+
+
+    // =====================================================
+    // MODALE DES ACTIONS
+    // =====================================================
+
+    const modal =
+        document.getElementById('documentActionModal');
+
+    // Pas de modale pour l'administrateur
+    if (!modal) return;
+
+    const form =
+        document.getElementById('documentActionForm');
+
+    const title =
+        document.getElementById('documentActionTitle');
+
+    const message =
+        document.getElementById('documentActionMessage');
+
+    const name =
+        document.getElementById('documentActionName');
+
+    const confirm =
+        document.getElementById('documentActionConfirm');
+
+    const cancel =
+        modal.querySelector('.document-delete-cancel');
+
+
+    // =====================================================
+    // CONFIGURATION DES ACTIONS
+    // =====================================================
+
+    const actions = {
+
+        submit: {
+            title: 'Soumettre pour validation ?',
+            message:
+                'Le document sera transmis pour validation. Vous ne pourrez plus ajouter de version avant une demande de modification.',
+            button: 'Soumettre',
+            style: ''
+        },
+
+        delete: {
+            title: 'Supprimer le document ?',
+            message:
+                'Cette action supprimera également ses versions et ne pourra pas être annulée.',
+            button: 'Supprimer',
+            style: 'is-danger'
+        },
+
+        change: {
+            title: 'Demander une modification ?',
+            message:
+                'Le document retournera au statut Brouillon. Une nouvelle version pourra ensuite être ajoutée.',
+            button: 'Confirmer',
+            style: ''
+        },
+
+        validate: {
+            title: 'Valider le document ?',
+            message:
+                'Le document passera au statut Validé et pourra ensuite être publié.',
+            button: 'Valider',
+            style: 'is-success'
+        },
+
+        publish: {
+            title: 'Publier le document ?',
+            message:
+                'Le document sera publié et deviendra accessible aux utilisateurs autorisés.',
+            button: 'Publier',
+            style: ''
+        }
+    };
+
+
+    // =====================================================
+    // FERMER LA MODALE
+    // =====================================================
+
+    function closeModal() {
+
+        modal.classList.remove('is-open');
+
+        modal.setAttribute(
+            'aria-hidden',
+            'true'
+        );
+
+        document.body.classList.remove(
+            'modal-open'
+        );
+    }
+
+
+    // =====================================================
+    // OUVRIR LA MODALE
+    // =====================================================
+
+    document.querySelectorAll('.js-document-action')
+        .forEach(button => {
+
+            button.addEventListener('click', function () {
+
+                const config =
+                    actions[button.dataset.action];
+
+                if (!config) return;
+
+                form.action =
+                    button.dataset.url;
+
+                title.textContent =
+                    config.title;
+
+                message.textContent =
+                    config.message;
+
+                name.textContent =
+                    '« ' + button.dataset.title + ' »';
+
+                confirm.textContent =
+                    config.button;
+
+                confirm.className =
+                    'document-delete-confirm ' + config.style;
+
+                modal.classList.add('is-open');
+
+                modal.setAttribute(
+                    'aria-hidden',
+                    'false'
+                );
+
+                document.body.classList.add(
+                    'modal-open'
+                );
+
+                cancel.focus();
+            });
+        });
+
+
+    // =====================================================
+    // FERMER PAR BOUTON OU FOND
+    // =====================================================
+
+    modal.querySelectorAll('[data-document-modal-close]')
+        .forEach(button => {
+
+            button.addEventListener(
+                'click',
+                closeModal
+            );
+        });
+
+
+    // =====================================================
+    // FERMER AVEC ÉCHAP
+    // =====================================================
+
+    document.addEventListener('keydown', function (event) {
+
+        if (
+            event.key === 'Escape' &&
+            modal.classList.contains('is-open')
+        ) {
+            closeModal();
+        }
+    });
+
+});
+</script>
+
+{% endblock %}

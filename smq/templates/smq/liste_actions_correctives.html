@@ -1,0 +1,345 @@
+
+{% extends 'smq/base.html' %}
+{% block title %}Actions correctives - QualiCampus{% endblock %}
+
+{% block content %}
+<style>
+/* Recherche instantanée sans croix */
+.ac-search-toolbar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; padding:18px 24px; border-bottom:1px solid #edf0f4; }
+.ac-search-box { display:flex; align-items:center; gap:10px; width:min(100%,510px); min-height:44px; padding:0 12px; border:1px solid #dce3ec; border-radius:10px; background:#fff; transition:border-color .2s,box-shadow .2s; }
+.ac-search-box:focus-within { border-color:#667eea; box-shadow:0 0 0 3px rgba(102,126,234,.12); }
+.ac-search-icon { width:19px; height:19px; flex-shrink:0; color:#64748b; }
+.ac-search-input { flex:1; min-width:0; width:100%; padding:11px 0; border:0; outline:0; background:transparent; color:#1e293b; font:inherit; font-size:14px; }
+.ac-search-input::placeholder { color:#94a3b8; }
+.ac-search-count { color:#64748b; font-size:13px; white-space:nowrap; }
+.ac-search-empty-cell { padding:38px 16px !important; text-align:center; color:#64748b; }
+.ac-search-empty-cell strong { display:block; margin-bottom:6px; color:#334155; }
+.ac-data-row[hidden], .ac-search-empty-row[hidden] { display:none !important; }
+@media(max-width:600px) { .ac-search-toolbar { padding:14px; } .ac-search-box { width:100%; } }
+
+/* Historique des actions de remplacement */
+.ac-history { margin:6px 0 0 44px; max-width:310px; font-size:11px; line-height:1.45; color:#64748b; }
+.ac-history summary { display:inline-flex; align-items:center; gap:5px; list-style:none; cursor:pointer; color:#64748b; font-size:11px; font-weight:600; user-select:none; }
+.ac-history summary::-webkit-details-marker { display:none; }
+.ac-history summary::before { content:"↳"; color:#94a3b8; }
+.ac-history summary::after { content:"⌄"; margin-left:2px; color:#94a3b8; }
+.ac-history[open] summary::after { content:"⌃"; }
+.ac-history summary:hover { color:#334155; }
+.ac-history summary:focus-visible { outline:2px solid #2563eb; outline-offset:3px; border-radius:3px; }
+.ac-history-detail { margin:6px 0 0 3px; padding:5px 0 5px 10px; border-left:2px solid #e2e8f0; color:#475569; overflow-wrap:anywhere; }
+
+/* Résultat de la vérification d'efficacité */
+.ac-action-verify { background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; cursor:pointer; }
+.ac-action-verify:hover { background:#e0e7ff; }
+.ac-verification-ok { color:#166534; font-weight:600; font-size:13px; }
+.ac-verification-ko { color:#b91c1c; font-weight:600; font-size:13px; }
+
+/* Fenêtre de vérification pour l'auditeur */
+.ac-verify-dialog { width:min(520px,calc(100% - 32px)); max-height:calc(100vh - 48px); overflow-y:auto; padding:28px; border:1px solid #e5e7eb; border-radius:14px; background:#fff; color:#1f2937; box-shadow:0 20px 60px rgba(0,0,0,.18); }
+.ac-verify-dialog::backdrop { background:rgba(15,23,42,.55); }
+.ac-verify-dialog h2 { margin:0 0 8px; font-size:21px; }
+.ac-verify-intro { margin:0 0 22px; color:#6b7280; line-height:1.5; }
+.ac-verify-field { margin-bottom:18px; }
+.ac-verify-field label { display:block; margin-bottom:8px; font-weight:600; }
+.ac-verify-field select, .ac-verify-field textarea { width:100%; box-sizing:border-box; padding:11px 12px; border:1px solid #d1d5db; border-radius:8px; background:#fff; color:#111827; font:inherit; }
+.ac-verify-field textarea { resize:vertical; min-height:100px; }
+.ac-verify-footer { display:flex; justify-content:flex-end; gap:10px; }
+.ac-verify-footer button { padding:10px 15px; border-radius:8px; font:inherit; cursor:pointer; }
+.ac-verify-cancel { border:1px solid #d1d5db; background:#fff; color:#374151; }
+.ac-verify-submit { border:1px solid #3730a3; background:#3730a3; color:#fff; }
+</style>
+
+<div class="ac-list-page">
+    <!-- En-tête -->
+    <div class="ac-list-header">
+        <div><h1>Actions correctives</h1></div>
+        {% if request.user.profil_smq.role == 'RESP_QUALITE' %}
+        <a href="{% url 'creer_action_corrective' %}" class="ac-add-button">
+            <span class="ac-add-icon">+</span> Ajouter une action
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="ac-list-card">
+        <div class="ac-list-card-header">
+            <div>
+                <h2>Plan d'actions correctives</h2>
+              
+            </div>
+        </div>
+
+        <!-- Barre de recherche sans croix -->
+        <div class="ac-search-toolbar" role="search" aria-label="Rechercher une action corrective">
+            <div class="ac-search-box">
+                <svg class="ac-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <path d="m16 16 5 5"></path>
+                </svg>
+                <input id="acSearchInput" class="ac-search-input" type="text"
+                       placeholder="Action, non-conformité, responsable, échéance, statut..."
+                       aria-label="Rechercher dans les actions correctives"
+                       aria-controls="acTableBody" autocomplete="off">
+            </div>
+            <span id="acSearchCount" class="ac-search-count" role="status" aria-live="polite">
+                {{ actions|length }} action{{ actions|length|pluralize }} au total
+            </span>
+        </div>
+
+        <div class="ac-table-wrapper">
+            <table class="ac-table">
+                <thead>
+                    <tr>
+                        <th>Action corrective</th>
+                        <th>Non-conformité</th>
+                        <th>Responsable</th>
+                        <th>Échéance</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="acTableBody">
+                    {% for action in actions %}
+                    <tr class="ac-data-row"
+                        data-search="{{ action.description }} {{ action.non_conformite.reference }} {{ action.non_conformite.description }} {{ action.responsable.prenom }} {{ action.responsable.nom }} {{ action.date_echeance|date:'d/m/Y' }} {{ action.date_echeance|date:'Y-m-d' }} {{ action.statut }} {{ action.get_statut_display }} {{ action.resultat_verification }} {{ action.action_precedente.description }} {{ action.action_suivante.description }}">
+
+                        <!-- Description et historique -->
+                        <td>
+                            <div class="ac-description">
+                                <div class="ac-description-icon">AC</div>
+                                <span title="{{ action.description }}">{{ action.description|truncatechars:85 }}</span>
+                            </div>
+                            {% if action.est_remplacee %}
+                            <details class="ac-history">
+                                <summary>Remplacée</summary>
+                                <div class="ac-history-detail" title="{{ action.action_suivante.description }}">
+                                    Nouvelle mesure : {{ action.action_suivante.description|truncatechars:95 }}
+                                </div>
+                            </details>
+                            {% endif %}
+                            {% if action.est_remplacement %}
+                            <details class="ac-history">
+                                <summary>Action de remplacement</summary>
+                                <div class="ac-history-detail" title="{{ action.action_precedente.description }}">
+                                    Action précédente : {{ action.action_precedente.description|truncatechars:95 }}
+                                </div>
+                            </details>
+                            {% endif %}
+                        </td>
+
+                        <!-- Non-conformité associée -->
+                        <td>
+                            {% if action.non_conformite %}
+                            <div class="ac-nc">
+                                <span class="ac-nc-reference">{{ action.non_conformite.reference }}</span>
+                                <span class="ac-nc-description" title="{{ action.non_conformite.description }}">
+                                    {{ action.non_conformite.description|truncatechars:45 }}
+                                </span>
+                            </div>
+                            {% else %}
+                            <span class="ac-empty-value">—</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Responsable -->
+                        <td>
+                            {% if action.responsable %}
+                            <div class="ac-responsable">
+                                <div class="ac-avatar">{{ action.responsable.prenom|slice:':1' }}{{ action.responsable.nom|slice:':1' }}</div>
+                                <div class="ac-responsable-info">
+                                    <strong>{{ action.responsable.prenom }} {{ action.responsable.nom }}</strong>
+                                </div>
+                            </div>
+                            {% else %}
+                            <span class="ac-empty-value">Non attribué</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Échéance -->
+                        <td><div class="ac-date">{{ action.date_echeance|date:'d/m/Y' }}</div></td>
+
+                        <!-- Statut -->
+                        <td>
+                            {% if action.statut == 'A_FAIRE' %}
+                            <span class="ac-badge ac-status-todo"><span class="ac-status-dot"></span>À faire</span>
+                            {% elif action.statut == 'EN_COURS' %}
+                            <span class="ac-badge ac-status-progress"><span class="ac-status-dot"></span>En cours</span>
+                            {% elif action.statut == 'TERMINEE' %}
+                            <span class="ac-badge ac-status-done"><span class="ac-status-dot"></span>Terminée</span>
+                            {% elif action.statut == 'ANNULEE' %}
+                            <span class="ac-badge ac-status-cancelled"><span class="ac-status-dot"></span>Annulée</span>
+                            {% else %}
+                            <span class="ac-empty-value">{{ action.get_statut_display }}</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Actions selon les permissions -->
+                        <td>
+                            <div class="ac-actions">
+                                {% if action.statut == 'A_FAIRE' %}
+                                    {% if request.user.profil_smq.role == 'RESP_QUALITE' %}
+                                    <a href="{% url 'modifier_action_corrective' action.id %}"
+                                       class="ac-action-button ac-action-edit">Modifier</a>
+                                    {% elif request.user.profil_smq.role == 'PILOTE' and action.responsable_id == request.user.profil_smq.id %}
+                                    <form method="post" action="{% url 'demarrer_action_corrective' action.id %}" class="ac-inline-form">
+                                        {% csrf_token %}
+                                        <button type="submit" class="ac-action-button ac-action-start">Démarrer</button>
+                                    </form>
+                                    {% else %}
+                                    <span class="ac-empty-value">Consultation</span>
+                                    {% endif %}
+
+                                {% elif action.statut == 'EN_COURS' %}
+                                    {% if request.user.profil_smq.role == 'PILOTE' and action.responsable_id == request.user.profil_smq.id %}
+                                    <form method="post" action="{% url 'terminer_action_corrective' action.id %}" class="ac-inline-form">
+                                        {% csrf_token %}
+                                        <button type="submit" class="ac-action-button ac-action-finish">Terminer</button>
+                                    </form>
+                                    {% else %}
+                                    <span class="ac-empty-value">Consultation</span>
+                                    {% endif %}
+
+                                {% elif action.statut == 'TERMINEE' %}
+                                    {% if action.resultat_verification == 'EFFICACE' %}
+                                    <span class="ac-verification-ok" title="{{ action.observation_verification }}">Efficacité vérifiée ✓</span>
+                                    {% elif action.resultat_verification == 'NON_EFFICACE' %}
+                                    <span class="ac-verification-ko" title="{{ action.observation_verification }}">Non efficace</span>
+                                    {% elif request.user.profil_smq.role == 'AUDITEUR' and action.non_conformite.audit.auditeur_id == request.user.profil_smq.id and action.non_conformite.statut == 'RESOLUE' %}
+                                    <button type="button" class="ac-action-button ac-action-verify"
+                                            data-url="{% url 'verifier_efficacite_action' action.id %}"
+                                            data-reference="{{ action.non_conformite.reference }}"
+                                            onclick="ouvrirVerification(this)">Vérifier l'efficacité</button>
+                                    {% else %}
+                                    <span class="ac-finished">Réalisée</span>
+                                    {% endif %}
+
+                                {% elif action.statut == 'ANNULEE' %}
+                                    <span class="ac-cancelled">Annulée</span>
+                                {% else %}
+                                    <span class="ac-empty-value">Consultation</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="ac-empty-state">
+                                <div class="ac-empty-icon">AC</div>
+                                <strong>Aucune action corrective</strong>
+                                <span>Aucune action corrective n'est disponible pour votre compte.</span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if actions %}
+                    <tr id="acSearchNoResults" class="ac-search-empty-row" hidden>
+                        <td colspan="6" class="ac-search-empty-cell">
+                            <strong>Aucune action corrective trouvée</strong>
+                            Essayez une autre description, référence, responsable, date ou statut.
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Vérification d'efficacité : formulaire visible uniquement pour l'auditeur -->
+{% if request.user.profil_smq.role == 'AUDITEUR' %}
+<dialog id="acVerificationDialog" class="ac-verify-dialog" aria-labelledby="acVerificationTitle">
+    <h2 id="acVerificationTitle">Vérification d'efficacité</h2>
+    <p class="ac-verify-intro">
+        Non-conformité : <strong id="acVerificationReference"></strong>
+        <br>
+        Indiquez si l'action corrective a effectivement résolu le problème.
+    </p>
+    <form id="acVerificationForm" method="post">
+        {% csrf_token %}
+        <div class="ac-verify-field">
+            <label for="acResultat">Résultat de la vérification</label>
+            <select id="acResultat" name="resultat_verification" required>
+                <option value="">Sélectionnez un résultat</option>
+                <option value="EFFICACE">Efficace</option>
+                <option value="NON_EFFICACE">Non efficace</option>
+            </select>
+        </div>
+        <div class="ac-verify-field">
+            <label for="acObservation">Observation de l'auditeur</label>
+            <textarea id="acObservation" name="observation_verification" rows="4"
+                      placeholder="Décrivez les éléments vérifiés et justifiez votre décision..." required></textarea>
+        </div>
+        <div class="ac-verify-footer">
+            <button type="button" class="ac-verify-cancel" onclick="fermerVerification()">Annuler</button>
+            <button type="submit" class="ac-verify-submit">Enregistrer la vérification</button>
+        </div>
+    </form>
+</dialog>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    'use strict';
+    const input = document.getElementById('acSearchInput');
+    const counter = document.getElementById('acSearchCount');
+    const emptyRow = document.getElementById('acSearchNoResults');
+    const rows = Array.from(document.querySelectorAll('#acTableBody .ac-data-row'));
+    if (!input || !counter) return;
+
+    function normalize(value) {
+        return String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLocaleLowerCase('fr')
+            .replace(/[-_]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    const searchableRows = rows.map(function (row) {
+        return { element: row, text: normalize(row.dataset.search) };
+    });
+
+    function filterActions() {
+        const tokens = normalize(input.value).split(' ').filter(Boolean);
+        let visible = 0;
+        searchableRows.forEach(function (item) {
+            const matches = tokens.every(function (token) {
+                return item.text.includes(token);
+            });
+            item.element.hidden = !matches;
+            if (matches) visible += 1;
+        });
+        if (emptyRow) emptyRow.hidden = visible !== 0;
+        counter.textContent = visible + ' résultat' + (visible > 1 ? 's' : '')
+            + ' sur ' + rows.length + ' action' + (rows.length > 1 ? 's' : '')
+            + ' corrective' + (rows.length > 1 ? 's' : '');
+    }
+
+    input.addEventListener('input', filterActions);
+    filterActions();
+})();
+</script>
+
+{% if request.user.profil_smq.role == 'AUDITEUR' %}
+<script>
+function ouvrirVerification(bouton) {
+    const dialog = document.getElementById('acVerificationDialog');
+    const form = document.getElementById('acVerificationForm');
+    const reference = document.getElementById('acVerificationReference');
+    if (!dialog || !form || !reference) return;
+    form.reset();
+    form.action = bouton.dataset.url;
+    reference.textContent = bouton.dataset.reference;
+    dialog.showModal();
+    document.getElementById('acResultat').focus();
+}
+function fermerVerification() {
+    const dialog = document.getElementById('acVerificationDialog');
+    if (dialog) dialog.close();
+}
+</script>
+{% endif %}
+{% endblock %}

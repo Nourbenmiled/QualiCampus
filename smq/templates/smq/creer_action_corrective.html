@@ -1,0 +1,275 @@
+{% extends 'smq/base.html' %}
+
+{% block title %}
+Ajouter une action corrective - QualiCampus
+{% endblock %}
+
+{% block content %}
+
+<div class="ac-create-page">
+
+    <!-- =====================================================
+         EN-TÊTE
+    ====================================================== -->
+
+    <div class="ac-create-header">
+
+        <div>
+            <h1>Ajouter une action corrective</h1>
+
+       
+        </div>
+
+        <a
+            href="{% url 'liste_actions_correctives' %}"
+            class="ac-create-back"
+        >
+            <span>←</span>
+            Retour
+        </a>
+
+    </div>
+
+
+    <!-- =====================================================
+         FORMULAIRE
+    ====================================================== -->
+
+    <div class="ac-create-card">
+
+        <div class="ac-create-card-header">
+
+            <div>
+                <h2>Informations de l'action</h2>
+
+                
+            </div>
+
+            <span class="ac-create-badge">
+                Nouvelle action
+            </span>
+
+        </div>
+
+
+        <div class="ac-create-card-body">
+
+            <form method="post" class="ac-create-form">
+
+                {% csrf_token %}
+
+
+                <!-- =========================================
+                     ERREURS GÉNÉRALES
+                ========================================== -->
+
+                {% if form.non_field_errors %}
+
+                    <div class="ac-form-global-errors">
+
+                        {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+
+                <!-- =========================================
+                     CHAMPS DU FORMULAIRE
+                ========================================== -->
+
+                <div class="ac-form-grid">
+
+                    {% for field in form %}
+
+                        {% if field.is_hidden %}
+
+                            {{ field }}
+
+                        {% else %}
+
+                            <div class="ac-form-group">
+
+                                <label for="{{ field.id_for_label }}">
+
+                                    {{ field.label }}
+
+                                    {% if field.field.required %}
+                                        <span class="ac-required">*</span>
+                                    {% endif %}
+
+                                </label>
+
+
+                                <div class="ac-form-control">
+
+                                    {{ field }}
+
+                                </div>
+
+
+                                {% if field.help_text %}
+
+                                    <div class="ac-form-help">
+                                        {{ field.help_text }}
+                                    </div>
+
+                                {% endif %}
+
+
+                                {% if field.errors %}
+
+                                    <div class="ac-form-errors">
+
+                                        {% for error in field.errors %}
+                                            <span>{{ error }}</span>
+                                        {% endfor %}
+
+                                    </div>
+
+                                {% endif %}
+
+                            </div>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- =========================================
+                     ACTIONS
+                ========================================== -->
+
+                <div class="ac-create-actions">
+
+                    <button
+                        type="submit"
+                        class="ac-create-submit"
+                    >
+                        Créer l'action corrective
+                    </button>
+
+                    <a
+                        href="{% url 'liste_actions_correctives' %}"
+                        class="ac-create-cancel"
+                    >
+                        Annuler
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         CYCLE DE TRAITEMENT
+    ====================================================== -->
+
+    <div class="ac-cycle-card">
+
+        <div class="ac-cycle-header">
+
+            <div>
+                <h2>Cycle de traitement</h2>
+
+                <p>
+                    Suivi de l'avancement de l'action corrective
+                </p>
+            </div>
+
+        </div>
+
+
+        <div class="ac-cycle-body">
+
+            <div class="ac-cycle">
+
+                <!-- ÉTAPE 1 -->
+
+                <div class="ac-cycle-step ac-cycle-todo">
+
+                    <span class="ac-cycle-number">
+                        1
+                    </span>
+
+                    <div>
+                        <strong>À faire</strong>
+                        <span>Action créée</span>
+                    </div>
+
+                </div>
+
+
+                <div class="ac-cycle-arrow">
+                    →
+                </div>
+
+
+                <!-- ÉTAPE 2 -->
+
+                <div class="ac-cycle-step ac-cycle-progress">
+
+                    <span class="ac-cycle-number">
+                        2
+                    </span>
+
+                    <div>
+                        <strong>En cours</strong>
+                        <span>Traitement</span>
+                    </div>
+
+                </div>
+
+
+                <div class="ac-cycle-arrow">
+                    →
+                </div>
+
+
+                <!-- ÉTAPE 3 -->
+
+                <div class="ac-cycle-step ac-cycle-done">
+
+                    <span class="ac-cycle-number">
+                        3
+                    </span>
+
+                    <div>
+                        <strong>Terminée</strong>
+                        <span>Action réalisée</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="ac-cycle-info">
+
+                <span class="ac-cycle-info-icon">
+                    i
+                </span>
+
+                <p>
+                    Une nouvelle action est automatiquement créée avec
+                    le statut <strong>« À faire »</strong>. Le responsable
+                    pourra ensuite la démarrer puis la terminer.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

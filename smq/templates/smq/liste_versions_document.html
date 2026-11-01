@@ -1,0 +1,369 @@
+
+{% extends 'smq/base.html' %}
+{% block title %}Versions - {{ document.titre }} - QualiCampus{% endblock %}
+
+{% block content %}
+
+<!-- FIL D'ARIANE -->
+<div class="qc-breadcrumb">
+    {% if request.user.profil_smq.role == 'RESP_DIRECTION' or request.user.profil_smq.role == 'AUDITEUR' %}
+        <a href="{% url 'documents_publies' %}">Documents</a>
+    {% else %}
+        <a href="{% url 'liste_documents' %}">Documents</a>
+    {% endif %}
+    <span>›</span>
+    <strong>{{ document.titre }}</strong>
+</div>
+
+<!-- EN-TÊTE -->
+<section class="versions-page-header">
+    <div class="versions-page-title">
+        <div class="versions-page-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M6 2h8l4 4v16H6z"></path>
+                <path d="M14 2v5h5"></path>
+                <path d="M9 12h6"></path>
+                <path d="M9 16h6"></path>
+            </svg>
+        </div>
+        <div>
+            <h1>{{ document.titre }}</h1>
+            <div class="versions-title-meta">
+                <span>{{ document.get_type_display }}</span>
+                <span>•</span>
+                <span>{{ document.processus.nom }}</span>
+            </div>
+        </div>
+    </div>
+
+    {% if request.user.profil_smq.role == 'ADMIN' %}
+        <span class="versions-readonly-note" style="color: #64748b; font-size: 13px; font-weight: 500;">
+            Consultation uniquement
+        </span>
+    {% endif %}
+
+    {% if peut_ajouter_version %}
+        <a href="{% url 'ajouter_version_document' document.id %}" class="module-primary-button">
+            <span class="button-plus">+</span>
+            {% if document.statut == 'PUBLIE' %}
+                Nouvelle version
+            {% else %}
+                Ajouter une version
+            {% endif %}
+        </a>
+    {% endif %}
+</section>
+
+<!-- INFORMATIONS DU DOCUMENT -->
+<section class="versions-document-summary">
+    <div class="versions-summary-item">
+        <span class="versions-summary-label">Statut</span>
+        <div>
+            {% if document.statut == 'BROUILLON' %}
+                <span class="document-status document-status-draft">
+                    <span class="document-status-dot"></span>Brouillon
+                </span>
+            {% elif document.statut == 'EN_VALIDATION' %}
+                <span class="document-status document-status-validation">
+                    <span class="document-status-dot"></span>En validation
+                </span>
+            {% elif document.statut == 'VALIDE' %}
+                <span class="document-status document-status-valid">
+                    <span class="document-status-dot"></span>Validé
+                </span>
+            {% elif document.statut == 'PUBLIE' %}
+                <span class="document-status document-status-published">
+                    <span class="document-status-dot"></span>Publié
+                </span>
+            {% else %}
+                <span class="document-status">{{ document.get_statut_display }}</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="versions-summary-separator"></div>
+    <div class="versions-summary-item">
+        <span class="versions-summary-label">Processus</span>
+        <strong>{{ document.processus.nom }}</strong>
+    </div>
+
+    <div class="versions-summary-separator"></div>
+    <div class="versions-summary-item">
+        <span class="versions-summary-label">Type</span>
+        <strong>{{ document.get_type_display }}</strong>
+    </div>
+
+    <div class="versions-summary-separator"></div>
+    <div class="versions-summary-item">
+        <span class="versions-summary-label">Date de création</span>
+        <strong>{{ document.date_creation|date:"d/m/Y" }}</strong>
+    </div>
+</section>
+
+<!-- LISTE DES VERSIONS -->
+<section class="versions-list-card">
+    <div class="versions-list-heading">
+        <h2>Versions du document</h2>
+    </div>
+
+    {% if versions %}
+        <div class="versions-table-wrapper">
+            <table class="versions-table">
+                <thead>
+                    <tr>
+                        <th class="versions-number-column">#</th>
+                        <th>Version</th>
+                        <th>Statut</th>
+                        <th>Fichier</th>
+                        <th>Commentaire</th>
+                        <th>Créée par</th>
+                        <th>Date</th>
+                        <th class="versions-action-column">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for version in versions %}
+                        <tr>
+                            <td class="versions-row-number">{{ forloop.counter }}</td>
+
+                            <!-- NUMÉRO DE VERSION -->
+                            <td>
+                                <div class="version-number-cell">
+                                    <div class="version-number-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                            <path d="M6 2h8l4 4v16H6z"></path>
+                                            <path d="M14 2v5h5"></path>
+                                        </svg>
+                                    </div>
+                                    <strong>{{ version.numero_version }}</strong>
+                                </div>
+                            </td>
+
+                            <!-- STATUT DE LA VERSION -->
+                            <td>
+                                {% if version.statut == 'BROUILLON' %}
+                                    <span class="document-status document-status-draft">
+                                        <span class="document-status-dot"></span>Brouillon
+                                    </span>
+                                {% elif version.statut == 'EN_VALIDATION' %}
+                                    <span class="document-status document-status-validation">
+                                        <span class="document-status-dot"></span>En validation
+                                    </span>
+                                {% elif version.statut == 'VALIDE' %}
+                                    <span class="document-status document-status-valid">
+                                        <span class="document-status-dot"></span>Validé
+                                    </span>
+                                {% elif version.statut == 'PUBLIE' %}
+                                    <span class="document-status document-status-published">
+                                        <span class="document-status-dot"></span>Publié
+                                    </span>
+                                {% elif version.statut == 'ARCHIVE' %}
+                                    <span class="document-status" style="background: #f1f3f5; color: #667085; border: 1px solid #e4e7ec;">
+                                        <span class="document-status-dot" style="background: #98a2b3;"></span>Archivé
+                                    </span>
+                                {% else %}
+                                    <span class="versions-empty-value">—</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- FICHIER -->
+                            <td>
+                                <div class="version-file-cell">
+                                    <div class="version-file-type-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                            <path d="M6 2h8l4 4v16H6z"></path>
+                                            <path d="M14 2v5h5"></path>
+                                        </svg>
+                                    </div>
+                                    {% if version.fichier %}
+                                        <span title="{{ version.fichier.name }}">
+                                            {{ version.fichier.name|cut:"documents/" }}
+                                        </span>
+                                    {% else %}
+                                        <span class="versions-empty-value">—</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+
+                            <!-- COMMENTAIRE -->
+                            <td class="version-comment-cell">
+                                {% if version.commentaire %}
+                                    {{ version.commentaire|truncatechars:65 }}
+                                {% else %}
+                                    <span class="versions-empty-value">—</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- AUTEUR -->
+                            <td class="version-author-cell">
+                                {% if version.cree_par %}
+                                    <div class="version-author-avatar">
+                                        {{ version.cree_par.prenom|first|upper }}{{ version.cree_par.nom|first|upper }}
+                                    </div>
+                                    <span>{{ version.cree_par.prenom }} {{ version.cree_par.nom }}</span>
+                                {% else %}
+                                    <span class="versions-empty-value">—</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- DATE -->
+                            <td class="version-date-cell">
+                                {{ version.date_creation|date:"d/m/Y" }}
+                                <small>{{ version.date_creation|date:"H:i" }}</small>
+                            </td>
+
+                            <!-- ACTIONS : ADMIN EN LECTURE SEULE -->
+                            <td>
+                                <div class="version-row-actions">
+                                    <!-- OUVERTURE DU FICHIER : TOUS LES RÔLES AUTORISÉS À CONSULTER -->
+                                    {% if version.fichier %}
+                                        <a href="{{ version.fichier.url }}"
+                                           target="_blank"
+                                           rel="noopener"
+                                           class="version-download-button"
+                                           title="Ouvrir le fichier">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                                <path d="M12 3v12"></path>
+                                                <path d="M7 10l5 5 5-5"></path>
+                                                <path d="M5 21h14"></path>
+                                            </svg>
+                                            Ouvrir
+                                        </a>
+                                    {% endif %}
+
+                                    <!-- MODIFIER / SOUMETTRE UNE NOUVELLE VERSION EN BROUILLON -->
+                                    {% if document.statut == 'PUBLIE' and version.statut == 'BROUILLON' and peut_gerer_document %}
+                                        <a href="{% url 'modifier_version_document' version.id %}"
+                                           class="version-request-change-action"
+                                           title="Modifier cette version">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                                <path d="M12 20h9"></path>
+                                                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"></path>
+                                            </svg>
+                                            Modifier
+                                        </a>
+
+                                        <form method="post"
+                                              action="{% url 'soumettre_version_document' version.id %}"
+                                              class="version-submit-form">
+                                            {% csrf_token %}
+                                            <button type="submit" class="version-submit-action" title="Soumettre cette version pour validation">
+                                                Soumettre
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                                    <path d="M5 12h14"></path>
+                                                    <path d="M14 7l5 5-5 5"></path>
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+
+                                    <!-- DEMANDER UNE MODIFICATION / VALIDER : RESPONSABLE QUALITÉ -->
+                                    {% if document.statut == 'PUBLIE' and version.statut == 'EN_VALIDATION' and request.user.profil_smq.role == 'RESP_QUALITE' %}
+                                        <form method="post"
+                                              action="{% url 'demander_modification_version_document' version.id %}"
+                                              class="version-submit-form">
+                                            {% csrf_token %}
+                                            <button type="submit" class="version-request-change-action" title="Renvoyer cette version en brouillon">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                                    <path d="M9 7l-5 5 5 5"></path>
+                                                    <path d="M4 12h11a5 5 0 0 1 5 5v1"></path>
+                                                </svg>
+                                                Demander une modification
+                                            </button>
+                                        </form>
+
+                                        <form method="post"
+                                              action="{% url 'valider_version_document' version.id %}"
+                                              class="version-submit-form">
+                                            {% csrf_token %}
+                                            <button type="submit" class="version-validate-action" title="Valider cette version">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                                    <path d="M5 12l4 4L19 6"></path>
+                                                </svg>
+                                                Valider
+                                            </button>
+                                        </form>
+                                    {% endif %}
+
+                                    <!-- PUBLIER : RESPONSABLE QUALITÉ -->
+                                    {% if document.statut == 'PUBLIE' and version.statut == 'VALIDE' and request.user.profil_smq.role == 'RESP_QUALITE' %}
+                                        <form method="post"
+                                              action="{% url 'publier_version_document' version.id %}"
+                                              class="version-submit-form">
+                                            {% csrf_token %}
+                                            <button type="submit" class="version-publish-action" title="Publier cette version">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                                    <path d="M12 3v12"></path>
+                                                    <path d="M7 8l5-5 5 5"></path>
+                                                    <path d="M5 21h14"></path>
+                                                </svg>
+                                                Publier
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- WORKFLOW DU DOCUMENT INITIAL : ADMIN EXCLU -->
+        {% if document.statut == 'BROUILLON' and peut_gerer_document %}
+            <div class="versions-workflow-footer">
+                <div class="versions-workflow-info">
+                    <div class="versions-workflow-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                            <circle cx="12" cy="12" r="9"></circle>
+                            <path d="M12 8v5"></path>
+                            <path d="M12 17h.01"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <strong>Document en brouillon</strong>
+                        <span>
+                            Une fois les versions ajoutées, vous pouvez soumettre le document pour validation.
+                        </span>
+                    </div>
+                </div>
+                <form method="post" action="{% url 'soumettre_document' document.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="versions-submit-button">
+                        Soumettre pour validation
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                            <path d="M5 12h14"></path>
+                            <path d="M14 7l5 5-5 5"></path>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+
+    {% else %}
+        <!-- AUCUNE VERSION -->
+        <div class="versions-empty-state">
+            <div class="versions-empty-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                    <path d="M6 2h8l4 4v16H6z"></path>
+                    <path d="M14 2v5h5"></path>
+                    <path d="M12 11v7"></path>
+                    <path d="M8.5 14.5h7"></path>
+                </svg>
+            </div>
+            <h3>Aucune version</h3>
+            {% if peut_ajouter_version %}
+                <a href="{% url 'ajouter_version_document' document.id %}" class="module-primary-button">
+                    <span class="button-plus">+</span>
+                    {% if document.statut == 'PUBLIE' %}
+                        Nouvelle version
+                    {% else %}
+                        Ajouter une version
+                    {% endif %}
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+</section>
+
+{% endblock %}

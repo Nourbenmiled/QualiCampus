@@ -1,0 +1,383 @@
+
+{% extends 'smq/base.html' %}
+
+{% block title %}
+Historique - QualiCampus
+{% endblock %}
+
+{% block content %}
+
+<style>
+/* Barre de recherche du journal d'activité */
+.hist-search-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 18px 24px;
+    border-bottom: 1px solid #edf0f4;
+}
+
+.hist-search-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: min(100%, 520px);
+    min-height: 44px;
+    padding: 0 12px;
+    background: #fff;
+    border: 1px solid #dce3ec;
+    border-radius: 10px;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.hist-search-box:focus-within {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, .12);
+}
+
+.hist-search-icon {
+    width: 19px;
+    height: 19px;
+    flex-shrink: 0;
+    color: #64748b;
+}
+
+.hist-search-input {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    padding: 11px 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #1e293b;
+    font: inherit;
+    font-size: 14px;
+}
+
+.hist-search-input::placeholder {
+    color: #94a3b8;
+}
+
+.hist-search-count {
+    color: #64748b;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.hist-search-empty-cell {
+    padding: 38px 16px !important;
+    text-align: center;
+    color: #64748b;
+}
+
+.hist-search-empty-cell strong {
+    display: block;
+    margin-bottom: 6px;
+    color: #334155;
+}
+
+.hist-data-row[hidden],
+.hist-search-empty-row[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 600px) {
+    .hist-search-toolbar {
+        padding: 14px;
+    }
+
+    .hist-search-box {
+        width: 100%;
+    }
+}
+</style>
+
+<div class="hist-page">
+
+    <!-- EN-TÊTE -->
+    <div class="hist-page-header">
+        <div>
+            <h1>Historique des opérations</h1>
+        </div>
+    </div>
+
+    <!-- INFORMATION -->
+    <div class="hist-info-card">
+        <div class="hist-info-icon">H</div>
+
+        <div class="hist-info-content">
+            <strong>Traçabilité du SMQ</strong>
+            <p>
+                Les principales opérations effectuées dans
+                QualiCampus sont enregistrées afin de garantir
+                la traçabilité des activités du système de
+                management de la qualité.
+            </p>
+        </div>
+    </div>
+
+    <!-- JOURNAL D'ACTIVITÉ -->
+    <div class="hist-card">
+
+        <!-- EN-TÊTE DE LA CARTE -->
+        <div class="hist-card-header">
+            <div>
+                <h2>Journal d'activité</h2>
+                <p>Historique des opérations enregistrées</p>
+            </div>
+
+            <span class="hist-trace-badge">Traçabilité</span>
+        </div>
+
+        <!-- RECHERCHE INSTANTANÉE SANS CROIX -->
+        <div class="hist-search-toolbar"
+             role="search"
+             aria-label="Rechercher dans l'historique">
+
+            <div class="hist-search-box">
+                <svg class="hist-search-icon"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.8"
+                     aria-hidden="true">
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <path d="m16 16 5 5"></path>
+                </svg>
+
+                <!-- Aucune croix native ou personnalisée -->
+                <input
+                    type="text"
+                    id="histSearchInput"
+                    class="hist-search-input"
+                    placeholder="Date, utilisateur, e-mail, rôle, action..."
+                    aria-label="Rechercher une opération"
+                    aria-controls="histTableBody"
+                    autocomplete="off"
+                >
+            </div>
+
+            <span id="histSearchCount"
+                  class="hist-search-count"
+                  role="status"
+                  aria-live="polite">
+                {{ historiques|length }}
+                opération{{ historiques|length|pluralize }}
+                au total
+            </span>
+        </div>
+
+        <!-- TABLEAU -->
+        <div class="hist-table-wrapper">
+            <table class="hist-table">
+                <thead>
+                    <tr>
+                        <th>Date et heure</th>
+                        <th>Utilisateur</th>
+                        <th>Rôle</th>
+                        <th>Action réalisée</th>
+                    </tr>
+                </thead>
+
+                <tbody id="histTableBody">
+                    {% for historique in historiques %}
+                    <tr class="hist-data-row"
+                        data-date-iso="{{ historique.date_action|date:'Y-m-d' }}"
+                        data-role-code="{{ historique.utilisateur.role|default:'' }}">
+
+                        <!-- DATE ET HEURE -->
+                        <td>
+                            <div class="hist-date">
+                                <strong>
+                                    {{ historique.date_action|date:"d/m/Y" }}
+                                </strong>
+                                <span>
+                                    {{ historique.date_action|date:"H:i" }}
+                                </span>
+                            </div>
+                        </td>
+
+                        <!-- UTILISATEUR -->
+                        <td>
+                            {% if historique.utilisateur %}
+                            <div class="hist-user">
+                                <div class="hist-avatar">
+                                    {{ historique.utilisateur.prenom|slice:":1"|upper }}{{ historique.utilisateur.nom|slice:":1"|upper }}
+                                </div>
+
+                                <div class="hist-user-info">
+                                    <strong>
+                                        {{ historique.utilisateur.prenom }}
+                                        {{ historique.utilisateur.nom }}
+                                    </strong>
+
+                                    {% if historique.utilisateur.email %}
+                                    <span>
+                                        {{ historique.utilisateur.email }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="hist-system-user">
+                                <div class="hist-system-icon">S</div>
+                                <span>Utilisateur supprimé ou système</span>
+                            </div>
+                            {% endif %}
+                        </td>
+
+                        <!-- RÔLE -->
+                        <td>
+                            {% if historique.utilisateur %}
+                                {% if historique.utilisateur.role == 'ADMIN' %}
+                                <span class="hist-role hist-role-admin">
+                                    Administrateur
+                                </span>
+                                {% elif historique.utilisateur.role == 'RESP_QUALITE' %}
+                                <span class="hist-role hist-role-quality">
+                                    Responsable qualité
+                                </span>
+                                {% elif historique.utilisateur.role == 'RESP_DIRECTION' %}
+                                <span class="hist-role hist-role-direction">
+                                    Responsable de direction
+                                </span>
+                                {% elif historique.utilisateur.role == 'PILOTE' %}
+                                <span class="hist-role hist-role-pilote">
+                                    Pilote de processus
+                                </span>
+                                {% elif historique.utilisateur.role == 'AUDITEUR' %}
+                                <span class="hist-role hist-role-auditeur">
+                                    Auditeur
+                                </span>
+                                {% elif historique.utilisateur.role == 'CONTRIBUTEUR' %}
+                                <span class="hist-role hist-role-contributeur">
+                                    Contributeur
+                                </span>
+                                {% else %}
+                                <span class="hist-role hist-role-contributeur">
+                                    {{ historique.utilisateur.role }}
+                                </span>
+                                {% endif %}
+                            {% else %}
+                            <span class="hist-empty-value">—</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- ACTION RÉALISÉE -->
+                        <td>
+                            <div class="hist-action">
+                                <div class="hist-action-icon">✓</div>
+                                <span>{{ historique.action }}</span>
+                            </div>
+                        </td>
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">
+                            <div class="hist-empty-state">
+                                <div class="hist-empty-icon">H</div>
+                                <strong>Aucun historique</strong>
+                                <span>
+                                    Aucune opération n'a encore été
+                                    enregistrée dans QualiCampus.
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                    {% if historiques %}
+                    <tr id="histSearchNoResults"
+                        class="hist-search-empty-row"
+                        hidden>
+                        <td colspan="4" class="hist-search-empty-cell">
+                            <strong>Aucune opération trouvée</strong>
+                            Essayez un autre utilisateur, une date,
+                            un rôle ou une action.
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    'use strict';
+
+    const input = document.getElementById('histSearchInput');
+    const count = document.getElementById('histSearchCount');
+    const noResults = document.getElementById('histSearchNoResults');
+
+    const rows = Array.from(
+        document.querySelectorAll('#histTableBody .hist-data-row')
+    );
+
+    if (!input || !count) return;
+
+    // Recherche insensible aux accents et à la casse
+    function normalize(value) {
+        return String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLocaleLowerCase('fr')
+            .replace(/[-_]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    // Le texte visible contient notamment le rôle en français
+    const searchableRows = rows.map(function (row) {
+        return {
+            element: row,
+            text: normalize(
+                row.textContent + ' ' +
+                (row.dataset.dateIso || '') + ' ' +
+                (row.dataset.roleCode || '')
+            )
+        };
+    });
+
+    function filterHistory() {
+        const tokens = normalize(input.value)
+            .split(' ')
+            .filter(Boolean);
+
+        let visible = 0;
+
+        searchableRows.forEach(function (item) {
+            const matches = tokens.every(function (token) {
+                return item.text.includes(token);
+            });
+
+            item.element.hidden = !matches;
+
+            if (matches) {
+                visible += 1;
+            }
+        });
+
+        if (noResults) {
+            noResults.hidden = visible !== 0;
+        }
+
+        count.textContent =
+            visible + ' résultat' + (visible > 1 ? 's' : '') +
+            ' sur ' + rows.length + ' opération' +
+            (rows.length > 1 ? 's' : '');
+    }
+
+    input.addEventListener('input', filterHistory);
+
+    filterHistory();
+})();
+</script>
+{% endblock %}

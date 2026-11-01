@@ -1,0 +1,834 @@
+{% extends 'smq/base.html' %}
+{% block title %}Processus - QualiCampus{% endblock %}
+
+{% block content %}
+<style>
+    .qc-process-details { margin-top: 9px; max-width: 520px; }
+
+    .qc-process-details > summary {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        width: fit-content;
+        color: #2563eb;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        list-style: none;
+        user-select: none;
+    }
+
+    .qc-process-details > summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .qc-process-details > summary::before {
+        content: '▸';
+        font-size: 13px;
+        transition: transform .15s ease;
+    }
+
+    .qc-process-details[open] > summary::before {
+        transform: rotate(90deg);
+    }
+
+    .qc-process-details > summary:focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 3px;
+        border-radius: 3px;
+    }
+
+    .qc-process-details-content {
+        margin-top: 10px;
+        padding: 12px 14px;
+        border: 1px solid #e2e8f0;
+        border-radius: 9px;
+        background: #f8fafc;
+        color: #334155;
+        font-size: 13px;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+
+    .qc-process-details-content p {
+        margin: 0 0 8px;
+    }
+
+    .qc-process-details-content p:last-child {
+        margin-bottom: 0;
+    }
+
+    .qc-process-details-content strong {
+        color: #0f172a;
+    }
+
+    .qc-process-results {
+        margin-left: auto;
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 400;
+    }
+
+    .process-table tr.process-row[hidden],
+    .process-filter-empty[hidden] {
+        display: none !important;
+    }
+
+    /* Bouton de suppression */
+    .process-delete-form {
+        display: inline-flex;
+        margin: 0;
+    }
+
+    .process-delete-button {
+        background: #fff1f2;
+        border-color: #fecdd3;
+        color: #be123c;
+        cursor: pointer;
+    }
+
+    .process-delete-button:hover {
+        background: #ffe4e6;
+        border-color: #fda4af;
+        color: #9f1239;
+    }
+
+    .process-delete-button:focus-visible {
+        outline: 2px solid #e11d48;
+        outline-offset: 2px;
+    }
+</style>
+
+<!-- EN-TÊTE -->
+<section class="module-header">
+    <div class="module-title-group">
+        <div class="qc-process-title-icon">
+            <svg viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="5" r="2.5"></circle>
+                <circle cx="5" cy="12" r="2.5"></circle>
+                <circle cx="19" cy="12" r="2.5"></circle>
+                <circle cx="12" cy="19" r="2.5"></circle>
+                <path d="M10.2 6.8L6.8 10.2"></path>
+                <path d="M13.8 6.8l3.4 3.4"></path>
+                <path d="M6.8 13.8l3.4 3.4"></path>
+                <path d="M17.2 13.8l-3.4 3.4"></path>
+            </svg>
+        </div>
+        <div>
+            <h1>Processus</h1>
+        </div>
+    </div>
+
+    {% if request.user.profil_smq.role == 'RESP_QUALITE' %}
+        <a href="{% url 'creer_processus' %}"
+           class="module-primary-button">
+            <span class="button-plus">+</span>
+            Nouveau processus
+        </a>
+    {% endif %}
+</section>
+
+<!-- RECHERCHE ET FILTRES -->
+<section class="module-filters">
+
+    <div class="module-search">
+        <svg viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.8">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="M20 20l-4-4"></path>
+        </svg>
+
+        <input type="text"
+               id="processSearch"
+               placeholder="Rechercher un nom, un objectif, un pilote..."
+               autocomplete="off">
+    </div>
+
+    <div class="filter-field">
+        <label for="unitFilter">
+            Unité organisationnelle
+        </label>
+        <select id="unitFilter">
+            <option value="">Toutes les unités</option>
+        </select>
+    </div>
+
+    <div class="filter-field">
+        <label for="statusFilter">Statut</label>
+        <select id="statusFilter">
+            <option value="">Tous les statuts</option>
+            <option value="actif">Actif</option>
+            <option value="inactif">Inactif</option>
+        </select>
+    </div>
+
+    <button type="button"
+            class="filter-reset"
+            id="resetFilters">
+        <svg viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.8">
+            <path d="M4 5h16l-6 7v5l-4 2v-7z"></path>
+        </svg>
+        Réinitialiser
+    </button>
+</section>
+
+<!-- LISTE DES PROCESSUS -->
+<section class="process-list-card">
+
+    <div class="process-list-heading">
+        <h2>Liste des processus</h2>
+
+        <span class="qc-process-results"
+              id="processResultCount"
+              role="status"
+              aria-live="polite">
+            {{ processus|length }} processus
+        </span>
+    </div>
+
+    {% if processus %}
+
+        <div class="process-table-wrapper">
+            <table class="process-table">
+                <thead>
+                    <tr>
+                        <th class="process-number-column">#</th>
+                        <th>Processus</th>
+                        <th>Unité organisationnelle</th>
+                        <th>Pilote</th>
+                        <th>Statut</th>
+
+                        {% if request.user.profil_smq.role == 'RESP_QUALITE' %}
+                            <th class="process-actions-column">
+                                Actions
+                            </th>
+                        {% endif %}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in processus %}
+                        <tr class="process-row"
+                            data-name="{{ item.nom|lower }}"
+                            data-search="{{ item.nom }} {{ item.description }} {{ item.objectif }} {{ item.unite.nom }} {% if item.pilote %}{{ item.pilote.prenom }} {{ item.pilote.nom }}{% endif %}"
+                            data-unit="{{ item.unite.nom|lower }}"
+                            data-unit-label="{{ item.unite.nom }}"
+                            data-status="{% if item.actif %}actif{% else %}inactif{% endif %}">
+
+                            <!-- NUMÉRO -->
+                            <td class="process-number">
+                                {{ forloop.counter }}
+                            </td>
+
+                            <!-- NOM ET DÉTAILS -->
+                            <td>
+                                <div class="process-name-cell">
+
+                                    <div class="process-row-icon">
+                                        <svg viewBox="0 0 24 24"
+                                             fill="none"
+                                             stroke="currentColor"
+                                             stroke-width="1.8">
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                            <path d="M12 2v4"></path>
+                                            <path d="M12 18v4"></path>
+                                            <path d="M2 12h4"></path>
+                                            <path d="M18 12h4"></path>
+                                            <path d="M4.9 4.9l2.8 2.8"></path>
+                                            <path d="M16.3 16.3l2.8 2.8"></path>
+                                            <path d="M19.1 4.9l-2.8 2.8"></path>
+                                            <path d="M7.7 16.3l-2.8 2.8"></path>
+                                        </svg>
+                                    </div>
+
+                                    <div class="process-name-info">
+                                        <strong>{{ item.nom }}</strong>
+
+                                        {% if item.description %}
+                                            <span>
+                                                {{ item.description|truncatechars:65 }}
+                                            </span>
+                                        {% else %}
+                                            <span>Aucune description</span>
+                                        {% endif %}
+
+                                        <details class="qc-process-details">
+                                            <summary>
+                                                Voir les détails
+                                            </summary>
+
+                                            <div class="qc-process-details-content">
+                                                <p>
+                                                    <strong>Objectif :</strong>
+                                                    {{ item.objectif|default:"Non renseigné" }}
+                                                </p>
+
+                                                <p>
+                                                    <strong>Description :</strong>
+                                                    {{ item.description|default:"Aucune description"|linebreaksbr }}
+                                                </p>
+
+                                                <p>
+                                                    <strong>Unité :</strong>
+                                                    {{ item.unite.nom }}
+                                                </p>
+
+                                                <p>
+                                                    <strong>Pilote :</strong>
+                                                    {% if item.pilote %}
+                                                        {{ item.pilote.prenom }}
+                                                        {{ item.pilote.nom }}
+                                                    {% else %}
+                                                        Non attribué
+                                                    {% endif %}
+                                                </p>
+                                            </div>
+                                        </details>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- UNITÉ -->
+                            <td class="process-secondary-text">
+                                {{ item.unite.nom }}
+                            </td>
+
+                            <!-- PILOTE -->
+                            <td class="process-secondary-text">
+                                {% if item.pilote %}
+                                    {{ item.pilote.prenom }}
+                                    {{ item.pilote.nom }}
+                                {% else %}
+                                    <span class="process-empty-value">
+                                        Non attribué
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <!-- STATUT -->
+                            <td>
+                                {% if item.actif %}
+                                    <span class="process-status process-status-active">
+                                        <span class="status-indicator"></span>
+                                        Actif
+                                    </span>
+                                {% else %}
+                                    <span class="process-status process-status-inactive">
+                                        <span class="status-indicator"></span>
+                                        Inactif
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <!-- ACTIONS : RESPONSABLE QUALITÉ -->
+                            {% if request.user.profil_smq.role == 'RESP_QUALITE' %}
+                                <td>
+                                    <div class="process-actions">
+
+                                        <!-- MODIFIER -->
+                                        <a href="{% url 'modifier_processus' item.id %}"
+                                           class="process-action-button process-edit-button"
+                                           title="Modifier"
+                                           aria-label="Modifier {{ item.nom }}">
+                                            <svg viewBox="0 0 24 24"
+                                                 fill="none"
+                                                 stroke="currentColor"
+                                                 stroke-width="1.8">
+                                                <path d="M12 20h9"></path>
+                                                <path d="M16.5 3.5a2.1 2.1 0 013 3L8 18l-4 1 1-4z"></path>
+                                            </svg>
+                                        </a>
+
+                                        <!-- ACTIVER / DÉSACTIVER -->
+                                        <form method="post"
+                                              action="{% url 'changer_statut_processus' item.id %}"
+                                              class="process-status-form"
+                                              data-process-name="{{ item.nom }}"
+                                              data-process-active="{% if item.actif %}true{% else %}false{% endif %}">
+
+                                            {% csrf_token %}
+
+                                            {% if item.actif %}
+                                                <button type="submit"
+                                                        class="process-action-button process-disable-button"
+                                                        title="Désactiver"
+                                                        aria-label="Désactiver {{ item.nom }}">
+                                                    <svg viewBox="0 0 24 24"
+                                                         fill="none"
+                                                         stroke="currentColor"
+                                                         stroke-width="1.8">
+                                                        <circle cx="12" cy="12" r="9"></circle>
+                                                        <path d="M8 8l8 8"></path>
+                                                    </svg>
+                                                </button>
+                                            {% else %}
+                                                <button type="submit"
+                                                        class="process-action-button process-enable-button"
+                                                        title="Activer"
+                                                        aria-label="Activer {{ item.nom }}">
+                                                    <svg viewBox="0 0 24 24"
+                                                         fill="none"
+                                                         stroke="currentColor"
+                                                         stroke-width="1.8">
+                                                        <circle cx="12" cy="12" r="9"></circle>
+                                                        <path d="M8 12l2.5 2.5L16 9"></path>
+                                                    </svg>
+                                                </button>
+                                            {% endif %}
+                                        </form>
+
+                                        <!-- SUPPRIMER -->
+                                        <form method="post"
+                                              action="{% url 'supprimer_processus' item.id %}"
+                                              class="process-delete-form"
+                                              data-process-name="{{ item.nom }}">
+
+                                            {% csrf_token %}
+
+                                            <button type="submit"
+                                                    class="process-action-button process-delete-button"
+                                                    title="Supprimer"
+                                                    aria-label="Supprimer {{ item.nom }}">
+                                                <svg viewBox="0 0 24 24"
+                                                     fill="none"
+                                                     stroke="currentColor"
+                                                     stroke-width="1.8"
+                                                     stroke-linecap="round"
+                                                     stroke-linejoin="round"
+                                                     aria-hidden="true">
+                                                    <path d="M3 6h18"></path>
+                                                    <path d="M8 6V4h8v2"></path>
+                                                    <path d="M5 6l1 14h12l1-14"></path>
+                                                    <path d="M10 10v7"></path>
+                                                    <path d="M14 10v7"></path>
+                                                </svg>
+                                            </button>
+                                        </form>
+
+                                    </div>
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- AUCUN RÉSULTAT APRÈS FILTRAGE -->
+        <div class="process-filter-empty"
+             id="processFilterEmpty"
+             hidden>
+            Aucun processus ne correspond à votre recherche
+            ou aux filtres sélectionnés.
+        </div>
+
+    {% else %}
+
+        <!-- AUCUN PROCESSUS -->
+        <div class="process-empty-state">
+            <div class="process-empty-icon">
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.8">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M12 2v4"></path>
+                    <path d="M12 18v4"></path>
+                    <path d="M2 12h4"></path>
+                    <path d="M18 12h4"></path>
+                </svg>
+            </div>
+
+            <h3>Aucun processus</h3>
+
+            {% if request.user.profil_smq.role == 'RESP_QUALITE' %}
+                <a href="{% url 'creer_processus' %}"
+                   class="module-primary-button">
+                    <span class="button-plus">+</span>
+                    Nouveau processus
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
+</section>
+
+<!-- MODALE DE CONFIRMATION -->
+{% if request.user.profil_smq.role == 'RESP_QUALITE' %}
+    <div class="qc-modal-overlay"
+         id="statusModal"
+         aria-hidden="true">
+
+        <div class="qc-confirm-modal"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="statusModalTitle"
+             aria-describedby="statusModalText">
+
+            <div class="qc-confirm-icon"
+                 id="statusModalIcon">
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.8">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <path d="M12 8v5"></path>
+                    <path d="M12 16.5h.01"></path>
+                </svg>
+            </div>
+
+            <h3 id="statusModalTitle">
+                Modifier le statut
+            </h3>
+
+            <p id="statusModalText"></p>
+
+            <div class="qc-confirm-actions">
+                <button type="button"
+                        class="qc-confirm-cancel"
+                        id="statusModalCancel">
+                    Annuler
+                </button>
+
+                <button type="button"
+                        class="qc-confirm-submit"
+                        id="statusModalConfirm">
+                    Confirmer
+                </button>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // ==========================================
+    // RECHERCHE ET FILTRES
+    // ==========================================
+
+    const searchInput =
+        document.getElementById("processSearch");
+
+    const unitFilter =
+        document.getElementById("unitFilter");
+
+    const statusFilter =
+        document.getElementById("statusFilter");
+
+    const resetButton =
+        document.getElementById("resetFilters");
+
+    const rows = Array.from(
+        document.querySelectorAll(".process-row")
+    );
+
+    const emptyMessage =
+        document.getElementById("processFilterEmpty");
+
+    const resultCount =
+        document.getElementById("processResultCount");
+
+    function normalizeText(value) {
+        return (value || "")
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .trim();
+    }
+
+    // Construction du filtre des unités
+    const units = new Map();
+
+    rows.forEach(function (row) {
+        const value = normalizeText(row.dataset.unit);
+        const label = row.dataset.unitLabel;
+
+        if (value && label && !units.has(value)) {
+            units.set(value, label);
+        }
+    });
+
+    Array.from(units.entries())
+        .sort(function (a, b) {
+            return a[1].localeCompare(
+                b[1],
+                "fr",
+                { sensitivity: "base" }
+            );
+        })
+        .forEach(function ([value, label]) {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = label;
+            unitFilter.appendChild(option);
+        });
+
+    function filterProcesses() {
+
+        const terms = normalizeText(searchInput.value)
+            .split(/\s+/)
+            .filter(Boolean);
+
+        const selectedUnit =
+            normalizeText(unitFilter.value);
+
+        const selectedStatus =
+            statusFilter.value;
+
+        let visibleCount = 0;
+
+        rows.forEach(function (row) {
+
+            const searchableText =
+                normalizeText(row.dataset.search);
+
+            const matchesSearch = terms.every(function (term) {
+                return searchableText.includes(term);
+            });
+
+            const matchesUnit =
+                !selectedUnit ||
+                normalizeText(row.dataset.unit) === selectedUnit;
+
+            const matchesStatus =
+                !selectedStatus ||
+                row.dataset.status === selectedStatus;
+
+            const visible =
+                matchesSearch &&
+                matchesUnit &&
+                matchesStatus;
+
+            row.hidden = !visible;
+
+            if (visible) {
+                visibleCount++;
+            }
+        });
+
+        if (emptyMessage) {
+            emptyMessage.hidden = visibleCount !== 0;
+
+            emptyMessage.style.display =
+                visibleCount === 0 ? "flex" : "none";
+        }
+
+        if (resultCount) {
+            resultCount.textContent =
+                visibleCount + " processus";
+        }
+    }
+
+    searchInput.addEventListener(
+        "input",
+        filterProcesses
+    );
+
+    unitFilter.addEventListener(
+        "change",
+        filterProcesses
+    );
+
+    statusFilter.addEventListener(
+        "change",
+        filterProcesses
+    );
+
+    resetButton.addEventListener("click", function () {
+        searchInput.value = "";
+        unitFilter.value = "";
+        statusFilter.value = "";
+        filterProcesses();
+        searchInput.focus();
+    });
+
+
+    // ==========================================
+    // MODALE DE CONFIRMATION
+    // ==========================================
+
+    const modal =
+        document.getElementById("statusModal");
+
+    if (!modal) return;
+
+    const modalTitle =
+        document.getElementById("statusModalTitle");
+
+    const modalText =
+        document.getElementById("statusModalText");
+
+    const modalIcon =
+        document.getElementById("statusModalIcon");
+
+    const cancelButton =
+        document.getElementById("statusModalCancel");
+
+    const confirmButton =
+        document.getElementById("statusModalConfirm");
+
+    let pendingForm = null;
+    let previousFocus = null;
+
+    function openModal(form, title, message, action, danger) {
+
+        pendingForm = form;
+        previousFocus = document.activeElement;
+
+        modalTitle.textContent = title;
+        modalText.textContent = message;
+        confirmButton.textContent = action;
+
+        modalIcon.classList.toggle(
+            "confirm-disable",
+            danger
+        );
+
+        modalIcon.classList.toggle(
+            "confirm-enable",
+            !danger
+        );
+
+        confirmButton.classList.toggle(
+            "confirm-button-disable",
+            danger
+        );
+
+        confirmButton.classList.toggle(
+            "confirm-button-enable",
+            !danger
+        );
+
+        modal.classList.add("qc-modal-visible");
+        modal.setAttribute("aria-hidden", "false");
+
+        cancelButton.focus();
+    }
+
+    function closeModal() {
+
+        modal.classList.remove("qc-modal-visible");
+        modal.setAttribute("aria-hidden", "true");
+
+        pendingForm = null;
+
+        if (previousFocus && previousFocus.focus) {
+            previousFocus.focus();
+        }
+    }
+
+
+    // ==========================================
+    // ACTIVER / DÉSACTIVER
+    // ==========================================
+
+    document.querySelectorAll(".process-status-form")
+        .forEach(function (form) {
+
+            form.addEventListener("submit", function (event) {
+
+                event.preventDefault();
+
+                const name = form.dataset.processName;
+                const active =
+                    form.dataset.processActive === "true";
+
+                if (active) {
+
+                    openModal(
+                        form,
+                        "Désactiver le processus",
+                        "Voulez-vous vraiment désactiver « " +
+                            name + " » ?",
+                        "Désactiver",
+                        true
+                    );
+
+                } else {
+
+                    openModal(
+                        form,
+                        "Activer le processus",
+                        "Voulez-vous vraiment activer « " +
+                            name + " » ?",
+                        "Activer",
+                        false
+                    );
+                }
+            });
+        });
+
+
+    // ==========================================
+    // SUPPRIMER UN PROCESSUS
+    // ==========================================
+
+    document.querySelectorAll(".process-delete-form")
+        .forEach(function (form) {
+
+            form.addEventListener("submit", function (event) {
+
+                event.preventDefault();
+
+                const name = form.dataset.processName;
+
+                openModal(
+                    form,
+                    "Supprimer le processus",
+                    "Voulez-vous vraiment supprimer définitivement « " +
+                        name +
+                        " » ? Cette action est irréversible. " +
+                        "Si ce processus possède des documents ou " +
+                        "d'autres données associées, la suppression " +
+                        "sera refusée.",
+                    "Supprimer",
+                    true
+                );
+            });
+        });
+
+
+    // ==========================================
+    // BOUTONS DE LA MODALE
+    // ==========================================
+
+    cancelButton.addEventListener(
+        "click",
+        closeModal
+    );
+
+    confirmButton.addEventListener("click", function () {
+
+        if (pendingForm) {
+            pendingForm.submit();
+        }
+    });
+
+    // Fermer en cliquant à l'extérieur
+    modal.addEventListener("click", function (event) {
+
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+
+    // Fermer avec Échap
+    document.addEventListener("keydown", function (event) {
+
+        if (
+            event.key === "Escape" &&
+            modal.classList.contains("qc-modal-visible")
+        ) {
+            closeModal();
+        }
+    });
+
+});
+</script>
+{% endblock %}

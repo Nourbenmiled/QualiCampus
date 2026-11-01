@@ -1,0 +1,28 @@
+
+# Environnements virtuels Python
+venv/
+.venv/
+env/
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Configuration sensible
+.env
+.env.*
+!.env.example
+
+# Bases de données locales
+db.sqlite3
+*.sqlite3
+
+# Fichiers générés
+staticfiles/
+media/
+*.log
+
+# Editeurs
+.vscode/
+.idea/

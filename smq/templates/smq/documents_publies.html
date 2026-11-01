@@ -1,0 +1,928 @@
+{% extends 'smq/base.html' %}
+
+{% block title %}Documents publiés - QualiCampus{% endblock %}
+
+
+{% block content %}
+
+
+<!-- =========================================================
+     EN-TÊTE
+     ========================================================= -->
+
+<section class="document-page-header">
+
+    <div class="document-title-group">
+
+        <div class="document-title-icon">
+
+            <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+            >
+                <path d="M6 2h8l4 4v16H6z"></path>
+                <path d="M14 2v5h5"></path>
+                <path d="M9 12h6"></path>
+                <path d="M9 16h6"></path>
+                <path d="M9 8h2"></path>
+            </svg>
+
+        </div>
+
+        <h1>Documents publiés</h1>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================================================
+     FILTRES
+     ========================================================= -->
+
+<section class="document-filters">
+
+
+    <!-- RECHERCHE -->
+
+    <div class="document-search">
+
+        <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+        >
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="M20 20l-4-4"></path>
+        </svg>
+
+        <input
+            type="text"
+            id="publishedDocumentSearch"
+            placeholder="Rechercher un document..."
+            autocomplete="off"
+        >
+
+    </div>
+
+
+
+    <!-- UNITÉ ORGANISATIONNELLE -->
+
+    <div class="document-filter-field">
+
+        <label for="publishedUnitFilter">
+            Unité
+        </label>
+
+        <select id="publishedUnitFilter">
+
+            <option value="">
+                Toutes les unités
+            </option>
+
+            {% for unite in unites %}
+
+                <option
+                    value="{{ unite.id }}"
+                    {% if unite_selectionnee == unite.id|stringformat:"s" %}
+                        selected
+                    {% endif %}
+                >
+                    {{ unite.nom }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+    </div>
+
+
+
+    <!-- PROCESSUS -->
+
+    <div class="document-filter-field">
+
+        <label for="publishedProcessFilter">
+            Processus
+        </label>
+
+        <select id="publishedProcessFilter">
+
+            <option value="">
+                Tous les processus
+            </option>
+
+        </select>
+
+    </div>
+
+
+
+    <!-- TYPE -->
+
+    <div class="document-filter-field">
+
+        <label for="publishedTypeFilter">
+            Type
+        </label>
+
+        <select id="publishedTypeFilter">
+
+            <option value="">
+                Tous les types
+            </option>
+
+        </select>
+
+    </div>
+
+
+
+    <!-- RÉINITIALISER -->
+
+    <button
+        type="button"
+        class="document-filter-reset"
+        id="publishedResetFilters"
+    >
+
+        <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+        >
+            <path d="M4 5h16l-6 7v5l-4 2v-7z"></path>
+        </svg>
+
+        Réinitialiser
+
+    </button>
+
+</section>
+
+
+
+<!-- =========================================================
+     LISTE
+     ========================================================= -->
+
+<section class="document-list-card">
+
+    <div class="document-list-heading">
+
+        <h2>
+            Liste des documents publiés
+        </h2>
+
+    </div>
+
+
+    {% if documents %}
+
+        <div class="document-table-wrapper">
+
+            <table class="document-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th class="document-number-column">
+                            #
+                        </th>
+
+                        <th>
+                            Titre
+                        </th>
+
+                        <th>
+                            Processus
+                        </th>
+
+                        <th>
+                            Unité
+                        </th>
+
+                        <th>
+                            Type
+                        </th>
+
+                        <th>
+                            Version
+                        </th>
+
+                        <th>
+                            Date
+                        </th>
+
+                        <th class="document-actions-column">
+                            Action
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for document in documents %}
+
+                        <tr
+                            class="published-document-row"
+
+                            data-title="{{ document.titre|lower }}"
+
+                            data-description="{{ document.description|default:''|lower }}"
+
+                            data-process="{{ document.processus.nom|lower }}"
+
+                            data-process-label="{{ document.processus.nom }}"
+
+                            data-type="{{ document.type|lower }}"
+
+                            data-type-label="{{ document.get_type_display }}"
+                        >
+
+
+                            <!-- NUMÉRO -->
+
+                            <td class="document-number">
+
+                                {{ forloop.counter }}
+
+                            </td>
+
+
+
+                            <!-- TITRE -->
+
+                            <td>
+
+                                <div class="document-name-cell">
+
+                                    <div class="document-row-icon">
+
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="1.8"
+                                        >
+                                            <path d="M6 2h8l4 4v16H6z"></path>
+                                            <path d="M14 2v5h5"></path>
+                                            <path d="M9 12h6"></path>
+                                            <path d="M9 16h6"></path>
+                                        </svg>
+
+                                    </div>
+
+
+                                    <div class="document-name-info">
+
+                                        <strong>
+                                            {{ document.titre }}
+                                        </strong>
+
+
+                                        {% if document.description %}
+
+                                            <span>
+                                                {{ document.description|truncatechars:55 }}
+                                            </span>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+
+
+                            <!-- PROCESSUS -->
+
+                            <td class="document-secondary-text">
+
+                                {{ document.processus.nom }}
+
+                            </td>
+
+
+
+                            <!-- UNITÉ -->
+
+                            <td class="document-secondary-text">
+
+                                {{ document.processus.unite.nom }}
+
+                            </td>
+
+
+
+                            <!-- TYPE -->
+
+                            <td>
+
+                                <span class="document-type-badge document-type-{{ document.type|lower }}">
+
+                                    {{ document.get_type_display }}
+
+                                </span>
+
+                            </td>
+
+
+
+                            <!-- VERSION -->
+
+                            <td class="document-version">
+
+                                {% if document.derniere_version %}
+
+                                    {{ document.derniere_version.numero_version }}
+
+                                {% else %}
+
+                                    <span class="document-empty-value">
+                                        —
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+
+                            <!-- DATE -->
+
+                            <td class="document-secondary-text">
+
+                                {{ document.derniere_date|date:"d/m/Y" }}
+
+                            </td>
+
+
+
+                            <!-- ACTION -->
+
+                            <td>
+
+                                <div class="document-actions">
+
+                                    <a
+                                        href="{% url 'liste_versions_document' document.id %}"
+                                        class="document-action-icon document-view-action"
+                                        title="Consulter le document"
+                                        aria-label="Consulter {{ document.titre }}"
+                                    >
+
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="1.8"
+                                        >
+                                            <path
+                                                d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"
+                                            ></path>
+
+                                            <circle
+                                                cx="12"
+                                                cy="12"
+                                                r="2.5"
+                                            ></circle>
+
+                                        </svg>
+
+                                    </a>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+
+        <!-- AUCUN RÉSULTAT APRÈS FILTRAGE -->
+
+        <div
+            class="document-filter-empty"
+            id="publishedFilterEmpty"
+            style="display: none;"
+        >
+
+            Aucun document publié ne correspond à votre recherche.
+
+        </div>
+
+
+    {% else %}
+
+
+        <!-- AUCUN DOCUMENT PUBLIÉ -->
+
+        <div class="document-empty-state">
+
+            <div class="document-empty-icon">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                >
+                    <path d="M6 2h8l4 4v16H6z"></path>
+                    <path d="M14 2v5h5"></path>
+                </svg>
+
+            </div>
+
+
+            <h3>
+                Aucun document publié
+            </h3>
+
+        </div>
+
+    {% endif %}
+
+</section>
+
+
+{% endblock %}
+
+
+
+{% block scripts %}
+
+<script>
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+
+        /* =====================================================
+           ÉLÉMENTS
+           ===================================================== */
+
+        const searchInput =
+            document.getElementById(
+                "publishedDocumentSearch"
+            );
+
+
+        const unitFilter =
+            document.getElementById(
+                "publishedUnitFilter"
+            );
+
+
+        const processFilter =
+            document.getElementById(
+                "publishedProcessFilter"
+            );
+
+
+        const typeFilter =
+            document.getElementById(
+                "publishedTypeFilter"
+            );
+
+
+        const resetButton =
+            document.getElementById(
+                "publishedResetFilters"
+            );
+
+
+        const emptyMessage =
+            document.getElementById(
+                "publishedFilterEmpty"
+            );
+
+
+        const rows =
+            Array.from(
+                document.querySelectorAll(
+                    ".published-document-row"
+                )
+            );
+
+
+
+        /* =====================================================
+           NORMALISER TEXTE
+           ===================================================== */
+
+        function normalizeText(value) {
+
+            return (value || "")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(
+                    /[\u0300-\u036f]/g,
+                    ""
+                )
+                .trim();
+
+        }
+
+
+
+        /* =====================================================
+           CONSTRUIRE FILTRE PROCESSUS / TYPE
+           ===================================================== */
+
+        const processes =
+            new Map();
+
+
+        const types =
+            new Map();
+
+
+        rows.forEach(
+            function (row) {
+
+
+                const processValue =
+                    normalizeText(
+                        row.dataset.process
+                    );
+
+
+                const processLabel =
+                    row.dataset.processLabel;
+
+
+                const typeValue =
+                    normalizeText(
+                        row.dataset.type
+                    );
+
+
+                const typeLabel =
+                    row.dataset.typeLabel;
+
+
+
+                if (
+                    processValue &&
+                    processLabel &&
+                    !processes.has(
+                        processValue
+                    )
+                ) {
+
+                    processes.set(
+                        processValue,
+                        processLabel
+                    );
+
+                }
+
+
+
+                if (
+                    typeValue &&
+                    typeLabel &&
+                    !types.has(
+                        typeValue
+                    )
+                ) {
+
+                    types.set(
+                        typeValue,
+                        typeLabel
+                    );
+
+                }
+
+            }
+        );
+
+
+
+        /* PROCESSUS */
+
+        if (processFilter) {
+
+            Array.from(
+                processes.entries()
+            )
+                .sort(
+                    function (a, b) {
+
+                        return a[1].localeCompare(
+                            b[1],
+                            "fr",
+                            {
+                                sensitivity: "base"
+                            }
+                        );
+
+                    }
+                )
+                .forEach(
+                    function ([value, label]) {
+
+                        const option =
+                            document.createElement(
+                                "option"
+                            );
+
+
+                        option.value =
+                            value;
+
+
+                        option.textContent =
+                            label;
+
+
+                        processFilter.appendChild(
+                            option
+                        );
+
+                    }
+                );
+
+        }
+
+
+
+        /* TYPES */
+
+        if (typeFilter) {
+
+            Array.from(
+                types.entries()
+            )
+                .sort(
+                    function (a, b) {
+
+                        return a[1].localeCompare(
+                            b[1],
+                            "fr",
+                            {
+                                sensitivity: "base"
+                            }
+                        );
+
+                    }
+                )
+                .forEach(
+                    function ([value, label]) {
+
+                        const option =
+                            document.createElement(
+                                "option"
+                            );
+
+
+                        option.value =
+                            value;
+
+
+                        option.textContent =
+                            label;
+
+
+                        typeFilter.appendChild(
+                            option
+                        );
+
+                    }
+                );
+
+        }
+
+
+
+        /* =====================================================
+           FILTRAGE CÔTÉ CLIENT
+           ===================================================== */
+
+        function filterDocuments() {
+
+            const search =
+                normalizeText(
+                    searchInput
+                        ? searchInput.value
+                        : ""
+                );
+
+
+            const selectedProcess =
+                normalizeText(
+                    processFilter
+                        ? processFilter.value
+                        : ""
+                );
+
+
+            const selectedType =
+                normalizeText(
+                    typeFilter
+                        ? typeFilter.value
+                        : ""
+                );
+
+
+            let visibleCount = 0;
+
+
+
+            rows.forEach(
+                function (row) {
+
+
+                    const title =
+                        normalizeText(
+                            row.dataset.title
+                        );
+
+
+                    const description =
+                        normalizeText(
+                            row.dataset.description
+                        );
+
+
+                    const process =
+                        normalizeText(
+                            row.dataset.process
+                        );
+
+
+                    const type =
+                        normalizeText(
+                            row.dataset.type
+                        );
+
+
+
+                    const matchesSearch =
+                        search === "" ||
+                        title.includes(search) ||
+                        description.includes(search);
+
+
+                    const matchesProcess =
+                        selectedProcess === "" ||
+                        process === selectedProcess;
+
+
+                    const matchesType =
+                        selectedType === "" ||
+                        type === selectedType;
+
+
+
+                    const visible =
+                        matchesSearch &&
+                        matchesProcess &&
+                        matchesType;
+
+
+                    row.hidden =
+                        !visible;
+
+
+                    if (visible) {
+
+                        visibleCount++;
+
+                    }
+
+                }
+            );
+
+
+
+            if (emptyMessage) {
+
+                emptyMessage.style.display =
+                    visibleCount === 0
+                        ? "flex"
+                        : "none";
+
+            }
+
+        }
+
+
+
+        /* =====================================================
+           ÉVÉNEMENTS
+           ===================================================== */
+
+        if (searchInput) {
+
+            searchInput.addEventListener(
+                "input",
+                filterDocuments
+            );
+
+        }
+
+
+        if (processFilter) {
+
+            processFilter.addEventListener(
+                "change",
+                filterDocuments
+            );
+
+        }
+
+
+        if (typeFilter) {
+
+            typeFilter.addEventListener(
+                "change",
+                filterDocuments
+            );
+
+        }
+
+
+
+        /* =====================================================
+           FILTRE UNITÉ
+           ===================================================== */
+
+        if (unitFilter) {
+
+            unitFilter.addEventListener(
+                "change",
+                function () {
+
+                    const value =
+                        unitFilter.value;
+
+
+                    if (value) {
+
+                        window.location.href =
+                            "{% url 'documents_publies' %}" +
+                            "?unite=" +
+                            encodeURIComponent(value);
+
+                    } else {
+
+                        window.location.href =
+                            "{% url 'documents_publies' %}";
+
+                    }
+
+                }
+            );
+
+        }
+
+
+
+        /* =====================================================
+           RÉINITIALISER
+           ===================================================== */
+
+        if (resetButton) {
+
+            resetButton.addEventListener(
+                "click",
+                function () {
+
+                    window.location.href =
+                        "{% url 'documents_publies' %}";
+
+                }
+            );
+
+        }
+
+    }
+);
+
+</script>
+
+{% endblock %}

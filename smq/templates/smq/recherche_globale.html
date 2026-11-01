@@ -1,0 +1,796 @@
+{% extends 'smq/base.html' %}
+
+{% block title %}
+Recherche - QualiCampus
+{% endblock %}
+
+
+{% block content %}
+
+<div class="global-search-page">
+
+
+    <!-- =====================================================
+         EN-TÊTE
+    ====================================================== -->
+
+    <div class="global-search-header">
+
+        <div>
+
+            <h1>
+                Recherche globale
+            </h1>
+
+
+            {% if query %}
+
+                <p>
+                    Résultats correspondant à
+                    <strong>
+                        « {{ query }} »
+                    </strong>
+                </p>
+
+            {% else %}
+
+                <p>
+                    Recherchez dans l'ensemble
+                    de QualiCampus.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+
+        {% if query %}
+
+            <span class="global-search-count">
+
+                {{ nombre_resultats }}
+
+                résultat{{ nombre_resultats|pluralize }}
+
+            </span>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- =====================================================
+         PAS DE RECHERCHE
+    ====================================================== -->
+
+    {% if not query %}
+
+        <div class="global-search-empty">
+
+            <div class="global-search-empty-icon">
+                ⌕
+            </div>
+
+            <h2>
+                Rechercher dans QualiCampus
+            </h2>
+
+            <p>
+                Saisissez un terme dans la barre
+                de recherche située en haut de la page.
+            </p>
+
+        </div>
+
+
+    <!-- =====================================================
+         AUCUN RÉSULTAT
+    ====================================================== -->
+
+    {% elif nombre_resultats == 0 %}
+
+        <div class="global-search-empty">
+
+            <div class="global-search-empty-icon">
+                ?
+            </div>
+
+            <h2>
+                Aucun résultat trouvé
+            </h2>
+
+            <p>
+                Aucun élément ne correspond à
+                « {{ query }} ».
+            </p>
+
+        </div>
+
+
+    {% else %}
+
+
+        <!-- =================================================
+             PROCESSUS
+        ================================================== -->
+
+        {% if processus_resultats %}
+
+            <section class="global-result-section">
+
+                <div class="global-result-title">
+
+                    <div>
+
+                        <span
+                            class="global-result-icon result-blue"
+                        >
+                            P
+                        </span>
+
+                        <h2>
+                            Processus
+                        </h2>
+
+                    </div>
+
+                    <span>
+                        {{ processus_resultats|length }}
+                    </span>
+
+                </div>
+
+
+                <div class="global-result-list">
+
+                    {% for processus in processus_resultats %}
+
+                        <a
+                            href="{% url 'liste_processus' %}"
+                            class="global-result-item"
+                        >
+
+                            <div class="global-result-main">
+
+                                <strong>
+                                    {{ processus.nom }}
+                                </strong>
+
+                                <p>
+
+                                    {% if processus.unite %}
+
+                                        {{ processus.unite.nom }}
+
+                                    {% endif %}
+
+
+                                    {% if processus.description %}
+
+                                        ·
+                                        {{ processus.description|truncatechars:100 }}
+
+                                    {% endif %}
+
+                                </p>
+
+                            </div>
+
+
+                            <span class="global-result-type">
+                                Processus
+                            </span>
+
+                            <span class="global-result-arrow">
+                                →
+                            </span>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+
+        <!-- =================================================
+             DOCUMENTS
+        ================================================== -->
+
+        {% if documents_resultats %}
+
+            <section class="global-result-section">
+
+                <div class="global-result-title">
+
+                    <div>
+
+                        <span
+                            class="global-result-icon result-purple"
+                        >
+                            D
+                        </span>
+
+                        <h2>
+                            Documents
+                        </h2>
+
+                    </div>
+
+                    <span>
+                        {{ documents_resultats|length }}
+                    </span>
+
+                </div>
+
+
+                <div class="global-result-list">
+
+                    {% for document in documents_resultats %}
+
+
+                        {% if request.user.profil_smq.role == 'RESP_DIRECTION' or request.user.profil_smq.role == 'AUDITEUR' %}
+
+                            <a
+                                href="{% url 'documents_publies' %}"
+                                class="global-result-item"
+                            >
+
+                        {% else %}
+
+                            <a
+                                href="{% url 'liste_versions_document' document.id %}"
+                                class="global-result-item"
+                            >
+
+                        {% endif %}
+
+
+                            <div class="global-result-main">
+
+                                <strong>
+                                    {{ document.titre }}
+                                </strong>
+
+                                <p>
+
+                                    {% if document.processus %}
+
+                                        {{ document.processus.nom }}
+
+                                    {% endif %}
+
+
+                                    {% if document.description %}
+
+                                        ·
+                                        {{ document.description|truncatechars:100 }}
+
+                                    {% endif %}
+
+                                </p>
+
+                            </div>
+
+
+                            <span class="global-result-type">
+                                Document
+                            </span>
+
+                            <span class="global-result-arrow">
+                                →
+                            </span>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+
+        <!-- =================================================
+             AUDITS
+        ================================================== -->
+
+        {% if audits_resultats %}
+
+            <section class="global-result-section">
+
+                <div class="global-result-title">
+
+                    <div>
+
+                        <span
+                            class="global-result-icon result-orange"
+                        >
+                            A
+                        </span>
+
+                        <h2>
+                            Audits
+                        </h2>
+
+                    </div>
+
+                    <span>
+                        {{ audits_resultats|length }}
+                    </span>
+
+                </div>
+
+
+                <div class="global-result-list">
+
+                    {% for audit in audits_resultats %}
+
+                        <a
+                            href="{% url 'liste_audits' %}"
+                            class="global-result-item"
+                        >
+
+                            <div class="global-result-main">
+
+                                <strong>
+                                    {{ audit.reference }}
+                                    —
+                                    {{ audit.titre }}
+                                </strong>
+
+                                <p>
+
+                                    {% if audit.unite %}
+
+                                        {{ audit.unite.nom }}
+
+                                    {% endif %}
+
+
+                                    {% if audit.auditeur %}
+
+                                        ·
+                                        {{ audit.auditeur.prenom }}
+                                        {{ audit.auditeur.nom }}
+
+                                    {% endif %}
+
+                                </p>
+
+                            </div>
+
+
+                            <span class="global-result-type">
+                                Audit
+                            </span>
+
+                            <span class="global-result-arrow">
+                                →
+                            </span>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+
+        <!-- =================================================
+             NON-CONFORMITÉS
+        ================================================== -->
+
+        {% if non_conformites_resultats %}
+
+            <section class="global-result-section">
+
+                <div class="global-result-title">
+
+                    <div>
+
+                        <span
+                            class="global-result-icon result-red"
+                        >
+                            NC
+                        </span>
+
+                        <h2>
+                            Non-conformités
+                        </h2>
+
+                    </div>
+
+                    <span>
+                        {{ non_conformites_resultats|length }}
+                    </span>
+
+                </div>
+
+
+                <div class="global-result-list">
+
+                    {% for nc in non_conformites_resultats %}
+
+                        <a
+                            href="{% url 'liste_non_conformites' %}"
+                            class="global-result-item"
+                        >
+
+                            <div class="global-result-main">
+
+                                <strong>
+                                    {{ nc.reference }}
+                                </strong>
+
+                                <p>
+                                    {{ nc.description|truncatechars:120 }}
+                                </p>
+
+                            </div>
+
+
+                            <span class="global-result-type">
+                                Non-conformité
+                            </span>
+
+                            <span class="global-result-arrow">
+                                →
+                            </span>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+
+        <!-- =================================================
+             ACTIONS CORRECTIVES
+        ================================================== -->
+
+        {% if actions_resultats %}
+
+            <section class="global-result-section">
+
+                <div class="global-result-title">
+
+                    <div>
+
+                        <span
+                            class="global-result-icon result-green"
+                        >
+                            AC
+                        </span>
+
+                        <h2>
+                            Actions correctives
+                        </h2>
+
+                    </div>
+
+                    <span>
+                        {{ actions_resultats|length }}
+                    </span>
+
+                </div>
+
+
+                <div class="global-result-list">
+
+                    {% for action in actions_resultats %}
+
+                        <a
+                            href="{% url 'liste_actions_correctives' %}"
+                            class="global-result-item"
+                        >
+
+                            <div class="global-result-main">
+
+                                <strong>
+                                    Action corrective
+                                </strong>
+
+                                <p>
+
+                                    {{ action.description|truncatechars:110 }}
+
+                                    {% if action.non_conformite %}
+
+                                        ·
+                                        {{ action.non_conformite.reference }}
+
+                                    {% endif %}
+
+                                </p>
+
+                            </div>
+
+
+                            <span class="global-result-type">
+                                Action corrective
+                            </span>
+
+                            <span class="global-result-arrow">
+                                →
+                            </span>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+
+        <!-- =================================================
+             UNITÉS ORGANISATIONNELLES
+        ================================================== -->
+
+        {% if unites_resultats %}
+
+            <section class="global-result-section">
+
+                <div class="global-result-title">
+
+                    <div>
+
+                        <span
+                            class="global-result-icon result-cyan"
+                        >
+                            UO
+                        </span>
+
+                        <h2>
+                            Unités organisationnelles
+                        </h2>
+
+                    </div>
+
+                    <span>
+                        {{ unites_resultats|length }}
+                    </span>
+
+                </div>
+
+
+                <div class="global-result-list">
+
+                    {% for unite in unites_resultats %}
+
+                        <a
+                            href="{% url 'liste_unites' %}"
+                            class="global-result-item"
+                        >
+
+                            <div class="global-result-main">
+
+                                <strong>
+                                    {{ unite.nom }}
+                                </strong>
+
+                                <p>
+                                    Unité organisationnelle
+                                </p>
+
+                            </div>
+
+
+                            <span class="global-result-type">
+                                Unité
+                            </span>
+
+                            <span class="global-result-arrow">
+                                →
+                            </span>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+
+        <!-- =================================================
+             UTILISATEURS
+             ADMIN UNIQUEMENT
+        ================================================== -->
+
+        {% if utilisateurs_resultats %}
+
+            <section class="global-result-section">
+
+                <div class="global-result-title">
+
+                    <div>
+
+                        <span
+                            class="global-result-icon result-indigo"
+                        >
+                            U
+                        </span>
+
+                        <h2>
+                            Utilisateurs
+                        </h2>
+
+                    </div>
+
+                    <span>
+                        {{ utilisateurs_resultats|length }}
+                    </span>
+
+                </div>
+
+
+                <div class="global-result-list">
+
+                    {% for utilisateur in utilisateurs_resultats %}
+
+                        <a
+                            href="{% url 'modifier_utilisateur' utilisateur.id %}"
+                            class="global-result-item"
+                        >
+
+                            <div class="global-result-main">
+
+                                <strong>
+
+                                    {{ utilisateur.prenom }}
+                                    {{ utilisateur.nom }}
+
+                                </strong>
+
+                                <p>
+
+                                    {% if utilisateur.user %}
+
+                                        @{{ utilisateur.user.username }}
+
+                                    {% endif %}
+
+
+                                    {% if utilisateur.email %}
+
+                                        · {{ utilisateur.email }}
+
+                                    {% endif %}
+
+
+                                    {% if utilisateur.unite %}
+
+                                        · {{ utilisateur.unite.nom }}
+
+                                    {% endif %}
+
+                                </p>
+
+                            </div>
+
+
+                            <span class="global-result-type">
+                                Utilisateur
+                            </span>
+
+                            <span class="global-result-arrow">
+                                →
+                            </span>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+
+        <!-- =================================================
+             HISTORIQUE
+             ADMIN UNIQUEMENT
+        ================================================== -->
+
+        {% if historiques_resultats %}
+
+            <section class="global-result-section">
+
+                <div class="global-result-title">
+
+                    <div>
+
+                        <span
+                            class="global-result-icon result-gray"
+                        >
+                            H
+                        </span>
+
+                        <h2>
+                            Historique
+                        </h2>
+
+                    </div>
+
+                    <span>
+                        {{ historiques_resultats|length }}
+                    </span>
+
+                </div>
+
+
+                <div class="global-result-list">
+
+                    {% for historique in historiques_resultats %}
+
+                        <a
+                            href="{% url 'liste_historique' %}"
+                            class="global-result-item"
+                        >
+
+                            <div class="global-result-main">
+
+                                <strong>
+                                    {{ historique.action }}
+                                </strong>
+
+                                <p>
+
+                                    {% if historique.utilisateur %}
+
+                                        {{ historique.utilisateur.prenom }}
+                                        {{ historique.utilisateur.nom }}
+
+                                        ·
+
+                                    {% endif %}
+
+                                    {{ historique.date_action|date:"d/m/Y H:i" }}
+
+                                </p>
+
+                            </div>
+
+
+                            <span class="global-result-type">
+                                Historique
+                            </span>
+
+                            <span class="global-result-arrow">
+                                →
+                            </span>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

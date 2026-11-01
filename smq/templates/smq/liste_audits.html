@@ -1,0 +1,1656 @@
+
+{% extends 'smq/base.html' %}
+
+{% block title %}Audits - QualiCampus{% endblock %}
+
+{% block content %}
+
+<style>
+/* ========================================
+   RECHERCHE ET FILTRES
+======================================== */
+
+.audit-search-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 18px 24px;
+    border-bottom: 1px solid #edf0f4;
+}
+
+.audit-search-box {
+    display: flex;
+    align-items: center;
+    flex: 1 1 260px;
+    gap: 10px;
+    max-width: 380px;
+    min-height: 44px;
+    padding: 0 12px;
+    background: #fff;
+    border: 1px solid #dce3ec;
+    border-radius: 10px;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.audit-search-box:focus-within {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102,126,234,.12);
+}
+
+.audit-search-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: #64748b;
+}
+
+.audit-search-input {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    padding: 11px 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #1e293b;
+    font: inherit;
+    font-size: 14px;
+}
+
+.audit-search-input::placeholder {
+    color: #94a3b8;
+}
+
+.audit-filter-group {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.audit-filter-select {
+    flex: 1 1 155px;
+    min-width: 155px;
+    max-width: 235px;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid #dce3ec;
+    border-radius: 10px;
+    background: #fff;
+    color: #334155;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.audit-filter-select:focus-visible,
+.audit-reset-button:focus-visible {
+    outline: 3px solid rgba(102,126,234,.22);
+    outline-offset: 2px;
+    border-color: #667eea;
+}
+
+.audit-reset-button {
+    min-height: 44px;
+    padding: 10px 14px;
+    border: 1px solid #dce3ec;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #475569;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.audit-reset-button:hover:not(:disabled) {
+    background: #eef2ff;
+    color: #4338ca;
+}
+
+.audit-reset-button:disabled {
+    opacity: .5;
+    cursor: default;
+}
+
+.audit-search-count {
+    margin-left: auto;
+    font-size: 13px;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.audit-search-no-results {
+    text-align: center;
+    padding: 36px 16px !important;
+    color: #64748b;
+}
+
+.audit-search-no-results strong {
+    display: block;
+    margin-bottom: 5px;
+    color: #334155;
+}
+
+.audit-data-row[hidden],
+.audit-search-empty-row[hidden] {
+    display: none !important;
+}
+
+/* ========================================
+   BOUTON ANNULER
+======================================== */
+
+.audit-cancel-trigger {
+    color: #b42336;
+    background: #fff1f2;
+    border: 1px solid #ffe4e6;
+    cursor: pointer;
+}
+
+.audit-cancel-trigger:hover {
+    color: #9f1239;
+    background: #ffe4e6;
+}
+
+/* ========================================
+   MODALE ANNULATION
+======================================== */
+
+.audit-cancel-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15,23,42,.56);
+}
+
+.audit-cancel-overlay.is-visible {
+    display: flex;
+}
+
+.audit-cancel-dialog {
+    width: 100%;
+    max-width: 440px;
+    padding: 28px;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(15,23,42,.24);
+}
+
+.audit-cancel-dialog h3 {
+    margin: 0 0 12px;
+    font-size: 20px;
+    color: #0f172a;
+}
+
+.audit-cancel-dialog p {
+    color: #475569;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.audit-cancel-name {
+    color: #0f172a;
+    overflow-wrap: anywhere;
+}
+
+.audit-cancel-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+.audit-cancel-actions button {
+    min-height: 40px;
+    padding: 9px 15px;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.audit-cancel-dismiss {
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+}
+
+.audit-cancel-confirm {
+    background: #be123c;
+    border: 1px solid #be123c;
+    color: #fff;
+}
+
+.audit-cancel-confirm:hover {
+    background: #9f1239;
+}
+
+/* ========================================
+   RESPONSIVE
+======================================== */
+
+@media (max-width: 600px) {
+    .audit-search-toolbar {
+        padding: 14px;
+    }
+
+    .audit-search-box,
+    .audit-filter-group {
+        flex-basis: 100%;
+        max-width: none;
+        width: 100%;
+    }
+
+    .audit-filter-select {
+        max-width: none;
+    }
+
+    .audit-search-count {
+        margin-left: 0;
+    }
+
+    .audit-cancel-dialog {
+        padding: 22px;
+    }
+
+    .audit-cancel-actions {
+        flex-direction: column-reverse;
+    }
+
+    .audit-cancel-actions button,
+    .audit-cancel-actions form {
+        width: 100%;
+    }
+}
+</style>
+
+
+<!-- ========================================
+     PAGE GESTION DES AUDITS
+======================================== -->
+
+<div class="audit-list-page">
+
+    <!-- EN-TÊTE -->
+    <div class="audit-list-header">
+
+        <div class="audit-list-heading">
+            <h1>Gestion des audits</h1>
+        </div>
+
+        {% if request.user.profil_smq.role == 'ADMIN' %}
+            <span class="audit-view-only">
+                Consultation
+            </span>
+        {% endif %}
+
+        {% if request.user.profil_smq.role == 'RESP_QUALITE' %}
+            <a href="{% url 'creer_audit' %}"
+               class="audit-create-button">
+
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2">
+                    <path d="M12 5v14"></path>
+                    <path d="M5 12h14"></path>
+                </svg>
+
+                <span>Planifier un audit</span>
+            </a>
+        {% endif %}
+
+    </div>
+
+
+    <!-- CARTE PRINCIPALE -->
+    <div class="audit-list-card">
+
+        <div class="audit-card-header">
+
+            <div>
+                <h2>Audits qualité</h2>
+            </div>
+
+            <div class="audit-total">
+
+                <div class="audit-total-icon">
+                    <svg viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8">
+                        <rect x="5" y="4"
+                              width="14"
+                              height="17"
+                              rx="2"></rect>
+                        <path d="M9 4V2h6v2"></path>
+                        <path d="M9 11h6"></path>
+                        <path d="M9 15h6"></path>
+                    </svg>
+                </div>
+
+                <div>
+                    <strong>{{ audits|length }}</strong>
+                    <span>
+                        audit{{ audits|length|pluralize }}
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ==================================
+             RECHERCHE ET FILTRES
+        ================================== -->
+
+        <div class="audit-search-toolbar"
+             role="search"
+             aria-label="Rechercher et filtrer les audits">
+
+            <!-- Recherche -->
+            <div class="audit-search-box">
+
+                <svg class="audit-search-icon"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.8"
+                     aria-hidden="true">
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <path d="m16 16 5 5"></path>
+                </svg>
+
+                <input type="text"
+                       id="auditSearchInput"
+                       class="audit-search-input"
+                       placeholder="Rechercher un audit..."
+                       aria-label="Rechercher dans les audits"
+                       aria-controls="auditTableBody"
+                       autocomplete="off">
+
+            </div>
+
+
+            <!-- Filtres -->
+            <div class="audit-filter-group">
+
+                <!-- Filtre statut -->
+                <select id="auditStatusFilter"
+                        class="audit-filter-select"
+                        aria-label="Filtrer par statut"
+                        aria-controls="auditTableBody">
+
+                    <option value="">
+                        Tous les statuts
+                    </option>
+
+                    <option value="PLANIFIE">
+                        Planifié
+                    </option>
+
+                    <option value="EN_COURS">
+                        En cours
+                    </option>
+
+                    <option value="TERMINE">
+                        Terminé
+                    </option>
+
+                    <option value="ANNULE">
+                        Annulé
+                    </option>
+
+                </select>
+
+
+                <!-- Filtre unité -->
+                <select id="auditUnitFilter"
+                        class="audit-filter-select"
+                        aria-label="Filtrer par unité"
+                        aria-controls="auditTableBody">
+
+                    <option value="">
+                        Toutes les unités
+                    </option>
+
+                    <!-- Rempli automatiquement en JS -->
+
+                </select>
+
+
+                <!-- Réinitialisation -->
+                <button type="button"
+                        id="auditResetFilters"
+                        class="audit-reset-button"
+                        disabled>
+                    Réinitialiser
+                </button>
+
+            </div>
+
+
+            <!-- Nombre de résultats -->
+            <span id="auditSearchCount"
+                  class="audit-search-count"
+                  role="status"
+                  aria-live="polite">
+
+                {{ audits|length }}
+                audit{{ audits|length|pluralize }}
+                au total
+
+            </span>
+
+        </div>
+
+
+        <!-- ==================================
+             TABLEAU DES AUDITS
+        ================================== -->
+
+        <div class="audit-table-wrapper">
+
+            <table class="audit-table">
+
+                <thead>
+                    <tr>
+                        <th>Référence</th>
+                        <th>Audit</th>
+                        <th>Unité</th>
+                        <th>Auditeur</th>
+                        <th>Date</th>
+                        <th>Statut</th>
+                        <th class="audit-actions-column">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+
+
+                <tbody id="auditTableBody">
+
+                    {% for audit in audits %}
+
+                    <tr class="audit-data-row"
+
+                        data-search="{{ audit.reference }} {{ audit.titre }} {{ audit.unite.nom }} {{ audit.auditeur.prenom }} {{ audit.auditeur.nom }} {{ audit.date_audit|date:'d/m/Y' }} {{ audit.date_audit|date:'Y-m-d' }} {{ audit.get_statut_display }}"
+
+                        data-statut="{{ audit.statut }}"
+
+                        data-unite="{{ audit.unite_id|default:'__sans_unite__' }}"
+
+                        data-unite-nom="{{ audit.unite.nom|default:'Sans unité' }}">
+
+
+                        <!-- RÉFÉRENCE -->
+                        <td>
+                            <span class="audit-reference">
+                                {{ audit.reference }}
+                            </span>
+                        </td>
+
+
+                        <!-- TITRE -->
+                        <td>
+
+                            <div class="audit-name-cell">
+
+                                <div class="audit-document-icon">
+
+                                    <svg viewBox="0 0 24 24"
+                                         fill="none"
+                                         stroke="currentColor"
+                                         stroke-width="1.8">
+
+                                        <rect x="5" y="4"
+                                              width="14"
+                                              height="17"
+                                              rx="2"></rect>
+
+                                        <path d="M9 4V2h6v2"></path>
+                                        <path d="M9 11l2 2 4-5"></path>
+
+                                    </svg>
+
+                                </div>
+
+                                <div class="audit-name-content">
+
+                                    <strong>
+                                        {{ audit.titre }}
+                                    </strong>
+
+                                    <span>Audit qualité</span>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <!-- UNITÉ -->
+                        <td>
+
+                            {% if audit.unite %}
+
+                                <div class="audit-unit">
+
+                                    <svg viewBox="0 0 24 24"
+                                         fill="none"
+                                         stroke="currentColor"
+                                         stroke-width="1.8">
+
+                                        <path d="M4 21V8l8-4 8 4v13"></path>
+                                        <path d="M9 21v-5h6v5"></path>
+
+                                    </svg>
+
+                                    <span>
+                                        {{ audit.unite.nom }}
+                                    </span>
+
+                                </div>
+
+                            {% else %}
+
+                                <span class="audit-empty-value">
+                                    —
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- AUDITEUR -->
+                        <td>
+
+                            {% if audit.auditeur %}
+
+                                <div class="audit-user">
+
+                                    <div class="audit-user-avatar">
+                                        {{ audit.auditeur.prenom|slice:":1"|upper }}{{ audit.auditeur.nom|slice:":1"|upper }}
+                                    </div>
+
+                                    <div class="audit-user-info">
+
+                                        <strong>
+                                            {{ audit.auditeur.prenom }}
+                                            {{ audit.auditeur.nom }}
+                                        </strong>
+
+                                        <span>Auditeur</span>
+
+                                    </div>
+
+                                </div>
+
+                            {% else %}
+
+                                <span class="audit-not-assigned">
+                                    Non attribué
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- DATE -->
+                        <td>
+
+                            <div class="audit-date">
+
+                                <svg viewBox="0 0 24 24"
+                                     fill="none"
+                                     stroke="currentColor"
+                                     stroke-width="1.8">
+
+                                    <rect x="3" y="5"
+                                          width="18"
+                                          height="16"
+                                          rx="2"></rect>
+
+                                    <path d="M16 3v4"></path>
+                                    <path d="M8 3v4"></path>
+                                    <path d="M3 10h18"></path>
+
+                                </svg>
+
+                                <span>
+                                    {{ audit.date_audit|date:"d/m/Y" }}
+                                </span>
+
+                            </div>
+
+                        </td>
+
+
+                        <!-- STATUT -->
+                        <td>
+
+                            {% if audit.statut == 'PLANIFIE' %}
+
+                                <span class="audit-status audit-status-planned">
+                                    <span class="audit-status-dot"></span>
+                                    Planifié
+                                </span>
+
+                            {% elif audit.statut == 'EN_COURS' %}
+
+                                <span class="audit-status audit-status-progress">
+                                    <span class="audit-status-dot"></span>
+                                    En cours
+                                </span>
+
+                            {% elif audit.statut == 'TERMINE' %}
+
+                                <span class="audit-status audit-status-finished">
+                                    <span class="audit-status-dot"></span>
+                                    Terminé
+                                </span>
+
+                            {% elif audit.statut == 'ANNULE' %}
+
+                                <span class="audit-status audit-status-cancelled">
+                                    <span class="audit-status-dot"></span>
+                                    Annulé
+                                </span>
+
+                            {% else %}
+
+                                <span class="audit-view-only">
+                                    {{ audit.get_statut_display }}
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- ==================================
+                             ACTIONS
+                        ================================== -->
+
+                        <td>
+
+                            <div class="audit-row-actions">
+
+
+                                <!-- RESPONSABLE QUALITÉ -->
+                                {% if request.user.profil_smq.role == 'RESP_QUALITE' %}
+
+                                    {% if audit.statut == 'PLANIFIE' %}
+
+                                        <!-- Modifier -->
+                                        <a href="{% url 'modifier_audit' audit.id %}"
+                                           class="audit-action-button audit-action-edit"
+                                           title="Modifier l'audit"
+                                           aria-label="Modifier l'audit {{ audit.reference }}">
+
+                                            <svg viewBox="0 0 24 24"
+                                                 fill="none"
+                                                 stroke="currentColor"
+                                                 stroke-width="1.8">
+
+                                                <path d="M12 20h9"></path>
+                                                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"></path>
+
+                                            </svg>
+
+                                        </a>
+
+
+                                        <!-- Annuler -->
+                                        <button type="button"
+                                                class="audit-action-button audit-cancel-trigger js-cancel-audit"
+                                                title="Annuler cet audit planifié"
+                                                aria-label="Annuler l'audit {{ audit.reference }}"
+                                                data-url="{% url 'annuler_audit' audit.id %}"
+                                                data-reference="{{ audit.reference|escape }}"
+                                                data-titre="{{ audit.titre|escape }}">
+
+                                            <svg viewBox="0 0 24 24"
+                                                 fill="none"
+                                                 stroke="currentColor"
+                                                 stroke-width="1.8"
+                                                 stroke-linecap="round"
+                                                 stroke-linejoin="round"
+                                                 aria-hidden="true">
+
+                                                <circle cx="12" cy="12" r="9"></circle>
+                                                <path d="M9 9l6 6M15 9l-6 6"></path>
+
+                                            </svg>
+
+                                        </button>
+
+                                    {% else %}
+
+                                        <span class="audit-view-only">
+                                            Consultation
+                                        </span>
+
+                                    {% endif %}
+
+
+                                <!-- AUDITEUR DÉSIGNÉ -->
+                                {% elif request.user.profil_smq.role == 'AUDITEUR' and audit.auditeur_id == request.user.profil_smq.id %}
+
+                                    {% if audit.statut == 'PLANIFIE' %}
+
+                                        <!-- Démarrer -->
+                                        <button type="button"
+                                                class="audit-start-button"
+                                                data-url="{% url 'demarrer_audit' audit.id %}"
+                                                data-reference="{{ audit.reference|escape }}"
+                                                data-titre="{{ audit.titre|escape }}"
+                                                onclick="openStartAuditModal(this)">
+
+                                            <svg viewBox="0 0 24 24"
+                                                 fill="currentColor">
+                                                <path d="M8 5v14l11-7z"></path>
+                                            </svg>
+
+                                            Démarrer
+
+                                        </button>
+
+
+                                    {% elif audit.statut == 'EN_COURS' %}
+
+                                        <!-- Terminer -->
+                                        <button type="button"
+                                                class="audit-finish-button"
+                                                data-url="{% url 'terminer_audit' audit.id %}"
+                                                data-reference="{{ audit.reference|escape }}"
+                                                data-titre="{{ audit.titre|escape }}"
+                                                onclick="openFinishAuditModal(this)">
+
+                                            <svg viewBox="0 0 24 24"
+                                                 fill="none"
+                                                 stroke="currentColor"
+                                                 stroke-width="2">
+
+                                                <path d="M20 6L9 17l-5-5"></path>
+
+                                            </svg>
+
+                                            Terminer
+
+                                        </button>
+
+
+                                    {% else %}
+
+                                        <span class="audit-view-only">
+                                            Consultation
+                                        </span>
+
+                                    {% endif %}
+
+
+                                <!-- ADMIN ET AUTRES RÔLES -->
+                                {% else %}
+
+                                    <span class="audit-view-only">
+
+                                        <svg viewBox="0 0 24 24"
+                                             fill="none"
+                                             stroke="currentColor"
+                                             stroke-width="1.8">
+
+                                            <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+
+                                        </svg>
+
+                                        Consultation
+
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+
+                    {% empty %}
+
+                    <!-- Aucun audit enregistré -->
+                    <tr>
+                        <td colspan="7" class="audit-empty-cell">
+
+                            <div class="audit-empty-state">
+
+                                <div class="audit-empty-icon">
+
+                                    <svg viewBox="0 0 24 24"
+                                         fill="none"
+                                         stroke="currentColor"
+                                         stroke-width="1.7">
+
+                                        <rect x="5" y="4"
+                                              width="14"
+                                              height="17"
+                                              rx="2"></rect>
+
+                                        <path d="M9 4V2h6v2"></path>
+                                        <path d="M9 11h6"></path>
+                                        <path d="M9 15h4"></path>
+
+                                    </svg>
+
+                                </div>
+
+                                <h3>Aucun audit enregistré</h3>
+
+                                <p>
+                                    Aucun audit n'est disponible
+                                    pour le moment.
+                                </p>
+
+                                {% if request.user.profil_smq.role == 'RESP_QUALITE' %}
+
+                                    <a href="{% url 'creer_audit' %}"
+                                       class="audit-empty-button">
+                                        Planifier un audit
+                                    </a>
+
+                                {% endif %}
+
+                            </div>
+
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+
+                    <!-- Aucun résultat après filtrage -->
+                    {% if audits %}
+
+                        <tr id="auditSearchNoResults"
+                            class="audit-search-empty-row"
+                            hidden>
+
+                            <td colspan="7"
+                                class="audit-search-no-results">
+
+                                <strong>Aucun audit trouvé</strong>
+
+                                Aucun audit ne correspond aux
+                                critères sélectionnés.
+
+                            </td>
+
+                        </tr>
+
+                    {% endif %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- ========================================
+     MODALE ANNULATION
+     RESPONSABLE QUALITÉ
+======================================== -->
+
+{% if request.user.profil_smq.role == 'RESP_QUALITE' %}
+
+<div id="cancelAuditModal"
+     class="audit-cancel-overlay"
+     aria-hidden="true">
+
+    <div class="audit-cancel-dialog"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="cancelAuditModalTitle"
+         aria-describedby="cancelAuditModalDescription">
+
+        <h3 id="cancelAuditModalTitle">
+            Annuler cet audit ?
+        </h3>
+
+        <p id="cancelAuditModalDescription">
+
+            L'audit
+
+            <strong id="cancelAuditName"
+                    class="audit-cancel-name"></strong>
+
+            passera au statut <strong>Annulé</strong>.
+
+            Il restera consultable pour assurer
+            la traçabilité.
+
+        </p>
+
+        <div class="audit-cancel-actions">
+
+            <button type="button"
+                    class="audit-cancel-dismiss"
+                    id="cancelAuditDismiss">
+                Retour
+            </button>
+
+            <form method="post"
+                  id="cancelAuditForm">
+
+                {% csrf_token %}
+
+                <button type="submit"
+                        class="audit-cancel-confirm">
+                    Confirmer l'annulation
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endif %}
+
+
+
+<!-- ========================================
+     MODALES AUDITEUR
+======================================== -->
+
+{% if request.user.profil_smq.role == 'AUDITEUR' %}
+
+
+<!-- MODALE DÉMARRER -->
+<div id="startAuditModal"
+     class="audit-confirm-overlay"
+     aria-hidden="true">
+
+    <div class="audit-confirm-modal"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="startAuditModalTitle">
+
+        <div class="audit-confirm-icon">
+
+            <svg viewBox="0 0 24 24"
+                 fill="currentColor">
+                <path d="M8 5v14l11-7z"></path>
+            </svg>
+
+        </div>
+
+        <div class="audit-confirm-content">
+
+            <h3 id="startAuditModalTitle">
+                Démarrer cet audit ?
+            </h3>
+
+            <p>
+                Vous êtes sur le point de démarrer
+                <strong id="startAuditName"></strong>.
+            </p>
+
+            <p class="audit-confirm-description">
+
+                L'audit passera du statut
+                <strong>Planifié</strong>
+                au statut
+                <strong>En cours</strong>.
+
+            </p>
+
+        </div>
+
+        <div class="audit-confirm-actions">
+
+            <button type="button"
+                    class="audit-confirm-cancel"
+                    onclick="closeStartAuditModal()">
+                Annuler
+            </button>
+
+            <form method="post"
+                  id="startAuditForm">
+
+                {% csrf_token %}
+
+                <button type="submit"
+                        class="audit-confirm-submit">
+
+                    <svg viewBox="0 0 24 24"
+                         fill="currentColor">
+                        <path d="M8 5v14l11-7z"></path>
+                    </svg>
+
+                    Démarrer l'audit
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- MODALE TERMINER -->
+<div id="finishAuditModal"
+     class="audit-confirm-overlay"
+     aria-hidden="true">
+
+    <div class="audit-confirm-modal"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="finishAuditModalTitle">
+
+        <div class="audit-confirm-icon">
+
+            <svg viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2">
+
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M8 12l3 3 5-6"></path>
+
+            </svg>
+
+        </div>
+
+        <div class="audit-confirm-content">
+
+            <h3 id="finishAuditModalTitle">
+                Terminer cet audit ?
+            </h3>
+
+            <p>
+                Vous êtes sur le point de terminer
+                <strong id="finishAuditName"></strong>.
+            </p>
+
+            <p class="audit-confirm-description">
+
+                L'audit passera du statut
+                <strong>En cours</strong>
+                au statut
+                <strong>Terminé</strong>.
+
+            </p>
+
+        </div>
+
+        <div class="audit-confirm-actions">
+
+            <button type="button"
+                    class="audit-confirm-cancel"
+                    onclick="closeFinishAuditModal()">
+                Annuler
+            </button>
+
+            <form method="post"
+                  id="finishAuditForm">
+
+                {% csrf_token %}
+
+                <button type="submit"
+                        class="audit-confirm-submit">
+
+                    <svg viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="2">
+                        <path d="M20 6L9 17l-5-5"></path>
+                    </svg>
+
+                    Terminer l'audit
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endif %}
+
+{% endblock %}
+
+
+
+<!-- ========================================
+     JAVASCRIPT
+======================================== -->
+
+{% block scripts %}
+
+<script>
+/* ========================================
+   RECHERCHE + FILTRE STATUT + FILTRE UNITÉ
+======================================== */
+
+(function () {
+
+    const input =
+        document.getElementById('auditSearchInput');
+
+    const statusSelect =
+        document.getElementById('auditStatusFilter');
+
+    const unitSelect =
+        document.getElementById('auditUnitFilter');
+
+    const resetButton =
+        document.getElementById('auditResetFilters');
+
+    const count =
+        document.getElementById('auditSearchCount');
+
+    const noResults =
+        document.getElementById('auditSearchNoResults');
+
+    const rows = Array.from(
+        document.querySelectorAll(
+            '#auditTableBody .audit-data-row'
+        )
+    );
+
+    if (
+        !input ||
+        !statusSelect ||
+        !unitSelect ||
+        !resetButton ||
+        !count
+    ) {
+        return;
+    }
+
+
+    /* Normalisation du texte */
+    function normalize(value) {
+
+        return String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLocaleLowerCase('fr')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+    }
+
+
+    /* Données de chaque audit */
+    const searchableRows = rows.map(function (row) {
+
+        return {
+
+            element: row,
+
+            text: normalize(row.dataset.search),
+
+            statut: row.dataset.statut || '',
+
+            unite: row.dataset.unite || '__sans_unite__',
+
+            uniteNom: row.dataset.uniteNom || 'Sans unité'
+
+        };
+
+    });
+
+
+    /* ==================================
+       CHARGEMENT AUTOMATIQUE DES UNITÉS
+    ================================== */
+
+    const units = new Map();
+
+    searchableRows.forEach(function (item) {
+
+        if (!units.has(item.unite)) {
+
+            units.set(
+                item.unite,
+                item.uniteNom
+            );
+
+        }
+
+    });
+
+
+    /* Trier les unités par ordre alphabétique */
+    Array.from(units.entries())
+
+        .sort(function (a, b) {
+
+            return a[1].localeCompare(
+                b[1],
+                'fr',
+                { sensitivity: 'base' }
+            );
+
+        })
+
+        .forEach(function (entry) {
+
+            const option =
+                document.createElement('option');
+
+            option.value = entry[0];
+
+            option.textContent = entry[1];
+
+            unitSelect.appendChild(option);
+
+        });
+
+
+    /* ==================================
+       FONCTION DE FILTRAGE
+    ================================== */
+
+    function filterAudits() {
+
+        const tokens = normalize(input.value)
+            .split(' ')
+            .filter(Boolean);
+
+        const selectedStatus = statusSelect.value;
+
+        const selectedUnit = unitSelect.value;
+
+        let visible = 0;
+
+
+        searchableRows.forEach(function (item) {
+
+            /* Recherche texte */
+            const matchesText = tokens.every(
+                function (token) {
+
+                    return item.text.includes(token);
+
+                }
+            );
+
+
+            /* Filtre statut */
+            const matchesStatus =
+                !selectedStatus ||
+                item.statut === selectedStatus;
+
+
+            /* Filtre unité */
+            const matchesUnit =
+                !selectedUnit ||
+                item.unite === selectedUnit;
+
+
+            /* Combinaison des trois critères */
+            const matches =
+                matchesText &&
+                matchesStatus &&
+                matchesUnit;
+
+
+            item.element.hidden = !matches;
+
+            if (matches) {
+                visible++;
+            }
+
+        });
+
+
+        /* Message aucun résultat */
+        if (noResults) {
+
+            noResults.hidden = visible !== 0;
+
+        }
+
+
+        /* Nombre de résultats */
+        count.textContent =
+            visible +
+            ' résultat' +
+            (visible > 1 ? 's' : '') +
+            ' sur ' +
+            rows.length +
+            ' audit' +
+            (rows.length > 1 ? 's' : '');
+
+
+        /* Bouton Réinitialiser */
+        resetButton.disabled =
+            !input.value.trim() &&
+            !selectedStatus &&
+            !selectedUnit;
+
+    }
+
+
+    /* ==================================
+       ÉVÉNEMENTS
+    ================================== */
+
+    input.addEventListener(
+        'input',
+        filterAudits
+    );
+
+    statusSelect.addEventListener(
+        'change',
+        filterAudits
+    );
+
+    unitSelect.addEventListener(
+        'change',
+        filterAudits
+    );
+
+
+    /* Réinitialiser tous les filtres */
+    resetButton.addEventListener(
+        'click',
+        function () {
+
+            input.value = '';
+
+            statusSelect.value = '';
+
+            unitSelect.value = '';
+
+            filterAudits();
+
+            input.focus();
+
+        }
+    );
+
+
+    /* Initialisation */
+    filterAudits();
+
+})();
+</script>
+
+
+
+<!-- ========================================
+     ANNULATION — RESPONSABLE QUALITÉ
+======================================== -->
+
+{% if request.user.profil_smq.role == 'RESP_QUALITE' %}
+
+<script>
+(function () {
+
+    const modal =
+        document.getElementById('cancelAuditModal');
+
+    if (!modal) return;
+
+    const form =
+        document.getElementById('cancelAuditForm');
+
+    const name =
+        document.getElementById('cancelAuditName');
+
+    const dismiss =
+        document.getElementById('cancelAuditDismiss');
+
+    let previousOverflow = '';
+
+
+    function closeCancelAuditModal() {
+
+        if (!modal.classList.contains('is-visible')) {
+            return;
+        }
+
+        modal.classList.remove('is-visible');
+
+        modal.setAttribute(
+            'aria-hidden',
+            'true'
+        );
+
+        document.body.style.overflow =
+            previousOverflow;
+
+    }
+
+
+    document.querySelectorAll('.js-cancel-audit')
+        .forEach(function (button) {
+
+            button.addEventListener('click', function () {
+
+                form.action = button.dataset.url;
+
+                name.textContent =
+                    button.dataset.reference +
+                    ' — ' +
+                    button.dataset.titre;
+
+                previousOverflow =
+                    document.body.style.overflow;
+
+                modal.classList.add('is-visible');
+
+                modal.setAttribute(
+                    'aria-hidden',
+                    'false'
+                );
+
+                document.body.style.overflow = 'hidden';
+
+                dismiss.focus();
+
+            });
+
+        });
+
+
+    dismiss.addEventListener(
+        'click',
+        closeCancelAuditModal
+    );
+
+
+    modal.addEventListener('click', function (event) {
+
+        if (event.target === modal) {
+            closeCancelAuditModal();
+        }
+
+    });
+
+
+    document.addEventListener('keydown', function (event) {
+
+        if (event.key === 'Escape') {
+            closeCancelAuditModal();
+        }
+
+    });
+
+})();
+</script>
+
+{% endif %}
+
+
+
+<!-- ========================================
+     DÉMARRAGE ET CLÔTURE — AUDITEUR
+======================================== -->
+
+{% if request.user.profil_smq.role == 'AUDITEUR' %}
+
+<script>
+
+function openStartAuditModal(button) {
+
+    const modal =
+        document.getElementById('startAuditModal');
+
+    const form =
+        document.getElementById('startAuditForm');
+
+    const auditName =
+        document.getElementById('startAuditName');
+
+    form.action = button.dataset.url;
+
+    auditName.textContent =
+        button.dataset.reference +
+        ' — ' +
+        button.dataset.titre;
+
+    modal.classList.add('is-visible');
+
+    modal.setAttribute(
+        'aria-hidden',
+        'false'
+    );
+
+    document.body.style.overflow = 'hidden';
+
+}
+
+
+function closeStartAuditModal() {
+
+    const modal =
+        document.getElementById('startAuditModal');
+
+    modal.classList.remove('is-visible');
+
+    modal.setAttribute(
+        'aria-hidden',
+        'true'
+    );
+
+    document.body.style.overflow = '';
+
+}
+
+
+function openFinishAuditModal(button) {
+
+    const modal =
+        document.getElementById('finishAuditModal');
+
+    const form =
+        document.getElementById('finishAuditForm');
+
+    const auditName =
+        document.getElementById('finishAuditName');
+
+    form.action = button.dataset.url;
+
+    auditName.textContent =
+        button.dataset.reference +
+        ' — ' +
+        button.dataset.titre;
+
+    modal.classList.add('is-visible');
+
+    modal.setAttribute(
+        'aria-hidden',
+        'false'
+    );
+
+    document.body.style.overflow = 'hidden';
+
+}
+
+
+function closeFinishAuditModal() {
+
+    const modal =
+        document.getElementById('finishAuditModal');
+
+    modal.classList.remove('is-visible');
+
+    modal.setAttribute(
+        'aria-hidden',
+        'true'
+    );
+
+    document.body.style.overflow = '';
+
+}
+
+
+document.addEventListener('keydown', function (event) {
+
+    if (event.key === 'Escape') {
+
+        closeStartAuditModal();
+
+        closeFinishAuditModal();
+
+    }
+
+});
+
+
+document.addEventListener('click', function (event) {
+
+    const startModal =
+        document.getElementById('startAuditModal');
+
+    const finishModal =
+        document.getElementById('finishAuditModal');
+
+    if (event.target === startModal) {
+        closeStartAuditModal();
+    }
+
+    if (event.target === finishModal) {
+        closeFinishAuditModal();
+    }
+
+});
+
+</script>
+
+{% endif %}
+
+{% endblock %}

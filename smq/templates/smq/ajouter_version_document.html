@@ -1,0 +1,589 @@
+{% extends 'smq/base.html' %}
+
+{% block title %}Ajouter une version - QualiCampus{% endblock %}
+
+{% block content %}
+
+<!-- =========================================================
+     FIL D'ARIANE
+     ========================================================= -->
+
+<div class="qc-breadcrumb">
+
+    <a href="{% url 'liste_documents' %}">
+        Documents
+    </a>
+
+    <span>›</span>
+
+    <a href="{% url 'liste_versions_document' document.id %}">
+        {{ document.titre }}
+    </a>
+
+    <span>›</span>
+
+    <strong>Ajouter une version</strong>
+
+</div>
+
+
+<!-- =========================================================
+     TITRE
+     ========================================================= -->
+
+<section class="version-form-header">
+
+    <div class="version-form-title-icon">
+
+        <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+        >
+            <path d="M6 2h8l4 4v16H6z"></path>
+            <path d="M14 2v5h5"></path>
+            <path d="M12 11v7"></path>
+            <path d="M8.5 14.5h7"></path>
+        </svg>
+
+    </div>
+
+    <div>
+
+        <h1>Ajouter une version</h1>
+
+        <span class="version-document-name">
+            {{ document.titre }}
+        </span>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     FORMULAIRE
+     ========================================================= -->
+
+<form
+    method="post"
+    enctype="multipart/form-data"
+    class="version-form-card"
+>
+
+    {% csrf_token %}
+
+
+    <!-- =====================================================
+         ERREURS GÉNÉRALES
+         ===================================================== -->
+
+    {% if form.non_field_errors %}
+
+        <div class="document-form-global-error">
+
+            {% for error in form.non_field_errors %}
+                <span>{{ error }}</span>
+            {% endfor %}
+
+        </div>
+
+    {% endif %}
+
+
+    <div class="version-form-grid">
+
+
+        <!-- =================================================
+             COLONNE GAUCHE
+             ================================================= -->
+
+        <div class="version-form-column">
+
+
+            <!-- =============================================
+                 VERSION AUTOMATIQUE
+                 ============================================= -->
+
+            <div class="version-form-field">
+
+                <label>
+                    Numéro de version
+                </label>
+
+                <div class="version-auto-field">
+
+                    <div class="version-auto-badge">
+                        {{ prochaine_version }}
+                    </div>
+
+                    <div class="version-auto-info">
+
+                        <strong>
+                            Version générée automatiquement
+                        </strong>
+
+                        <span>
+                            Le numéro est incrémenté à chaque nouvelle version.
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =============================================
+                 INFORMATIONS DU DOCUMENT
+                 ============================================= -->
+
+            <div class="version-document-card">
+
+                <div class="version-document-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                    >
+                        <path d="M6 2h8l4 4v16H6z"></path>
+                        <path d="M14 2v5h5"></path>
+                        <path d="M9 12h6"></path>
+                        <path d="M9 16h6"></path>
+                    </svg>
+
+                </div>
+
+
+                <div class="version-document-details">
+
+                    <span>
+                        Document
+                    </span>
+
+                    <strong>
+                        {{ document.titre }}
+                    </strong>
+
+
+                    <div class="version-document-meta">
+
+                        <span>
+                            {{ document.get_type_display }}
+                        </span>
+
+                        <span class="version-meta-separator">
+                            •
+                        </span>
+
+                        <span>
+                            {{ document.processus.nom }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             COLONNE DROITE
+             ================================================= -->
+
+        <div class="version-form-column">
+
+
+            <!-- =============================================
+                 COMMENTAIRE
+                 ============================================= -->
+
+            <div class="version-form-field">
+
+                <label for="{{ form.commentaire.id_for_label }}">
+                    Commentaire
+                </label>
+
+                <textarea
+                    name="{{ form.commentaire.html_name }}"
+                    id="{{ form.commentaire.id_for_label }}"
+                    class="version-form-textarea {% if form.commentaire.errors %}field-error{% endif %}"
+                    placeholder="Décrire les modifications apportées dans cette version..."
+                >{{ form.commentaire.value|default_if_none:'' }}</textarea>
+
+
+                {% for error in form.commentaire.errors %}
+
+                    <span class="document-form-error">
+                        {{ error }}
+                    </span>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         FICHIER
+         ===================================================== -->
+
+    <div class="version-file-section">
+
+        <label class="version-file-label">
+
+            Fichier
+
+            <span class="required-star">*</span>
+
+        </label>
+
+
+        <label
+            for="{{ form.fichier.id_for_label }}"
+            class="version-upload-zone {% if form.fichier.errors %}field-error{% endif %}"
+            id="versionUploadZone"
+        >
+
+            <input
+                type="file"
+                name="{{ form.fichier.html_name }}"
+                id="{{ form.fichier.id_for_label }}"
+                class="version-file-input"
+                accept=".pdf,.doc,.docx,.xls,.xlsx"
+                required
+            >
+
+
+            <!-- =============================================
+                 AUCUN FICHIER SÉLECTIONNÉ
+                 ============================================= -->
+
+            <div
+                class="version-upload-empty"
+                id="versionUploadEmpty"
+            >
+
+                <div class="version-upload-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.7"
+                    >
+                        <path d="M16 16l-4-4-4 4"></path>
+
+                        <path d="M12 12v9"></path>
+
+                        <path
+                            d="M20.4 17.5A5 5 0 0018 8.2
+                               7 7 0 004.3 10.4
+                               A4.5 4.5 0 005 19h3"
+                        ></path>
+                    </svg>
+
+                </div>
+
+
+                <strong>
+                    Cliquez pour sélectionner un fichier
+                </strong>
+
+                <span>
+                    ou glissez-déposez un fichier ici
+                </span>
+
+                <small>
+                    PDF, DOC, DOCX, XLS, XLSX
+                </small>
+
+            </div>
+
+
+            <!-- =============================================
+                 FICHIER SÉLECTIONNÉ
+                 ============================================= -->
+
+            <div
+                class="version-upload-selected"
+                id="versionUploadSelected"
+            >
+
+                <div class="version-selected-file-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                    >
+                        <path d="M6 2h8l4 4v16H6z"></path>
+                        <path d="M14 2v5h5"></path>
+                    </svg>
+
+                </div>
+
+
+                <div class="version-selected-file-info">
+
+                    <strong id="selectedFileName">
+                        Fichier sélectionné
+                    </strong>
+
+                    <span id="selectedFileSize"></span>
+
+                </div>
+
+
+                <div class="version-file-valid">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path d="M5 12l4 4L19 6"></path>
+                    </svg>
+
+                </div>
+
+            </div>
+
+        </label>
+
+
+        {% for error in form.fichier.errors %}
+
+            <span class="document-form-error">
+                {{ error }}
+            </span>
+
+        {% endfor %}
+
+    </div>
+
+
+    <!-- =====================================================
+         ACTIONS
+         ===================================================== -->
+
+    <div class="version-form-actions">
+
+        <a
+            href="{% url 'liste_versions_document' document.id %}"
+            class="version-cancel-button"
+        >
+            Annuler
+        </a>
+
+
+        <button
+            type="submit"
+            class="version-submit-button"
+        >
+            Ajouter {{ prochaine_version }}
+        </button>
+
+    </div>
+
+</form>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const fileInput =
+        document.getElementById(
+            "{{ form.fichier.id_for_label }}"
+        );
+
+    const uploadZone =
+        document.getElementById(
+            "versionUploadZone"
+        );
+
+    const emptyState =
+        document.getElementById(
+            "versionUploadEmpty"
+        );
+
+    const selectedState =
+        document.getElementById(
+            "versionUploadSelected"
+        );
+
+    const fileName =
+        document.getElementById(
+            "selectedFileName"
+        );
+
+    const fileSize =
+        document.getElementById(
+            "selectedFileSize"
+        );
+
+
+    if (!fileInput || !uploadZone) {
+        return;
+    }
+
+
+    /* =====================================================
+       AFFICHER LE FICHIER SÉLECTIONNÉ
+       ===================================================== */
+
+    function displayFile(file) {
+
+        if (!file) {
+            return;
+        }
+
+
+        fileName.textContent = file.name;
+
+
+        const sizeInKB =
+            file.size / 1024;
+
+
+        if (sizeInKB >= 1024) {
+
+            fileSize.textContent =
+                (sizeInKB / 1024).toFixed(2) + " Mo";
+
+        } else {
+
+            fileSize.textContent =
+                sizeInKB.toFixed(1) + " Ko";
+
+        }
+
+
+        emptyState.style.display =
+            "none";
+
+        selectedState.style.display =
+            "flex";
+
+        uploadZone.classList.add(
+            "version-file-ready"
+        );
+
+    }
+
+
+    /* =====================================================
+       SÉLECTION CLASSIQUE
+       ===================================================== */
+
+    fileInput.addEventListener(
+        "change",
+        function () {
+
+            if (
+                fileInput.files &&
+                fileInput.files.length > 0
+            ) {
+
+                displayFile(
+                    fileInput.files[0]
+                );
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       GLISSER / DÉPOSER
+       ===================================================== */
+
+    uploadZone.addEventListener(
+        "dragover",
+        function (event) {
+
+            event.preventDefault();
+
+            uploadZone.classList.add(
+                "version-upload-drag"
+            );
+
+        }
+    );
+
+
+    uploadZone.addEventListener(
+        "dragleave",
+        function () {
+
+            uploadZone.classList.remove(
+                "version-upload-drag"
+            );
+
+        }
+    );
+
+
+    uploadZone.addEventListener(
+        "drop",
+        function (event) {
+
+            event.preventDefault();
+
+            uploadZone.classList.remove(
+                "version-upload-drag"
+            );
+
+
+            if (
+                event.dataTransfer.files &&
+                event.dataTransfer.files.length > 0
+            ) {
+
+                const droppedFile =
+                    event.dataTransfer.files[0];
+
+
+                const transfer =
+                    new DataTransfer();
+
+
+                transfer.items.add(
+                    droppedFile
+                );
+
+
+                fileInput.files =
+                    transfer.files;
+
+
+                displayFile(
+                    droppedFile
+                );
+
+            }
+
+        }
+    );
+
+});
+
+</script>
+
+{% endblock %}

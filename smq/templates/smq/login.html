@@ -1,0 +1,982 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Connexion - QualiCampus</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family:
+                Inter,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+
+            background: #f4f7fb;
+            color: #172033;
+        }
+
+        /* =========================================
+           PAGE
+        ========================================= */
+
+        .login-page {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+        }
+
+
+        /* =========================================
+           PARTIE GAUCHE
+        ========================================= */
+
+        .login-brand {
+            position: relative;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+
+            padding: 55px 65px;
+
+            color: white;
+
+            background:
+                radial-gradient(
+                    circle at 20% 20%,
+                    rgba(96, 165, 250, 0.25),
+                    transparent 35%
+                ),
+                linear-gradient(
+                    145deg,
+                    #172554 0%,
+                    #1e3a8a 55%,
+                    #2563eb 100%
+                );
+
+            overflow: hidden;
+        }
+
+        .login-brand::before {
+            content: "";
+
+            position: absolute;
+
+            width: 380px;
+            height: 380px;
+
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 50%;
+
+            right: -120px;
+            top: -100px;
+        }
+
+        .login-brand::after {
+            content: "";
+
+            position: absolute;
+
+            width: 260px;
+            height: 260px;
+
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 50%;
+
+            left: -100px;
+            bottom: -80px;
+        }
+
+
+        /* =========================================
+           LOGO
+        ========================================= */
+
+        .brand-header {
+            position: relative;
+            z-index: 2;
+
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-logo {
+            width: 48px;
+            height: 48px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: rgba(255,255,255,0.15);
+
+            border: 1px solid rgba(255,255,255,0.20);
+
+            border-radius: 14px;
+
+            backdrop-filter: blur(8px);
+        }
+
+        .brand-logo svg {
+            width: 27px;
+            height: 27px;
+        }
+
+        .brand-name h1 {
+            font-size: 23px;
+            font-weight: 700;
+            letter-spacing: -0.4px;
+        }
+
+        .brand-name p {
+            margin-top: 3px;
+
+            font-size: 12px;
+
+            color: rgba(255,255,255,0.70);
+        }
+
+
+        /* =========================================
+           TEXTE GAUCHE
+        ========================================= */
+
+        .brand-content {
+            position: relative;
+            z-index: 2;
+
+            max-width: 570px;
+        }
+
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+
+            padding: 7px 12px;
+
+            margin-bottom: 24px;
+
+            border-radius: 50px;
+
+            background: rgba(255,255,255,0.12);
+
+            border: 1px solid rgba(255,255,255,0.15);
+
+            font-size: 12px;
+            font-weight: 600;
+
+            color: #dbeafe;
+        }
+
+        .brand-content h2 {
+            font-size: 42px;
+            line-height: 1.15;
+            letter-spacing: -1.2px;
+
+            margin-bottom: 20px;
+        }
+
+        .brand-content > p {
+            max-width: 500px;
+
+            font-size: 16px;
+            line-height: 1.7;
+
+            color: rgba(255,255,255,0.76);
+        }
+
+
+        /* =========================================
+           FONCTIONNALITÉS
+        ========================================= */
+
+        .features {
+            display: flex;
+            gap: 28px;
+
+            margin-top: 40px;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+
+            font-size: 13px;
+
+            color: rgba(255,255,255,0.82);
+        }
+
+        .feature-icon {
+            width: 28px;
+            height: 28px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 8px;
+
+            background: rgba(255,255,255,0.12);
+        }
+
+        .feature-icon svg {
+            width: 15px;
+            height: 15px;
+        }
+
+
+        /* =========================================
+           FOOTER GAUCHE
+        ========================================= */
+
+        .brand-footer {
+            position: relative;
+            z-index: 2;
+
+            font-size: 12px;
+
+            color: rgba(255,255,255,0.55);
+        }
+
+
+        /* =========================================
+           PARTIE DROITE
+        ========================================= */
+
+        .login-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 45px;
+
+            background: #f7f9fc;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 430px;
+        }
+
+
+        /* =========================================
+           TITRE
+        ========================================= */
+
+        .login-header {
+            margin-bottom: 34px;
+        }
+
+        .login-header h2 {
+            font-size: 30px;
+            font-weight: 750;
+
+            letter-spacing: -0.7px;
+
+            color: #172033;
+
+            margin-bottom: 9px;
+        }
+
+        .login-header p {
+            font-size: 14px;
+            line-height: 1.6;
+
+            color: #718096;
+        }
+
+
+        /* =========================================
+           FORMULAIRE
+        ========================================= */
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+
+            margin-bottom: 8px;
+
+            font-size: 13px;
+            font-weight: 600;
+
+            color: #344054;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+
+            left: 15px;
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            width: 19px;
+            height: 19px;
+
+            color: #98a2b3;
+
+            pointer-events: none;
+        }
+
+        .form-control {
+            width: 100%;
+            height: 50px;
+
+            padding:
+                0
+                45px
+                0
+                46px;
+
+            border: 1px solid #d9e0ea;
+
+            border-radius: 10px;
+
+            background: white;
+
+            font-family: inherit;
+            font-size: 14px;
+
+            color: #172033;
+
+            outline: none;
+
+            transition:
+                border-color 0.2s,
+                box-shadow 0.2s;
+        }
+
+        .form-control::placeholder {
+            color: #a5adba;
+        }
+
+        .form-control:focus {
+            border-color: #3b82f6;
+
+            box-shadow:
+                0 0 0 4px
+                rgba(59,130,246,0.10);
+        }
+
+
+        /* =========================================
+           MOT DE PASSE
+        ========================================= */
+
+        .password-toggle {
+            position: absolute;
+
+            right: 14px;
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            border: none;
+            background: transparent;
+
+            cursor: pointer;
+
+            color: #98a2b3;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 3px;
+        }
+
+        .password-toggle:hover {
+            color: #2563eb;
+        }
+
+        .password-toggle svg {
+            width: 19px;
+            height: 19px;
+        }
+
+
+        /* =========================================
+           MESSAGE D'ERREUR
+        ========================================= */
+
+        .error-message {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+
+            margin-bottom: 20px;
+
+            padding: 12px 14px;
+
+            border-radius: 9px;
+
+            background: #fff1f2;
+
+            border: 1px solid #fecdd3;
+
+            color: #be123c;
+
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .error-message svg {
+            width: 18px;
+            height: 18px;
+
+            flex-shrink: 0;
+
+            margin-top: 1px;
+        }
+
+
+        /* =========================================
+           BOUTON
+        ========================================= */
+
+        .login-button {
+            width: 100%;
+            height: 50px;
+
+            margin-top: 5px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+
+            border: none;
+
+            border-radius: 10px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #2563eb,
+                    #1d4ed8
+                );
+
+            color: white;
+
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 650;
+
+            cursor: pointer;
+
+            box-shadow:
+                0 5px 15px
+                rgba(37,99,235,0.22);
+
+            transition:
+                transform 0.15s,
+                box-shadow 0.15s;
+        }
+
+        .login-button:hover {
+            transform: translateY(-1px);
+
+            box-shadow:
+                0 8px 20px
+                rgba(37,99,235,0.28);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        .login-button svg {
+            width: 17px;
+            height: 17px;
+        }
+
+
+        /* =========================================
+           SÉCURITÉ
+        ========================================= */
+
+        .security-info {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 7px;
+
+            margin-top: 25px;
+
+            font-size: 12px;
+
+            color: #98a2b3;
+        }
+
+        .security-info svg {
+            width: 14px;
+            height: 14px;
+        }
+
+
+        /* =========================================
+           RESPONSIVE
+        ========================================= */
+
+        @media (max-width: 900px) {
+
+            .login-page {
+                grid-template-columns: 1fr;
+            }
+
+            .login-brand {
+                display: none;
+            }
+
+            .login-section {
+                min-height: 100vh;
+
+                padding: 30px 20px;
+            }
+
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+<div class="login-page">
+
+
+    <!-- =============================================
+         PARTIE GAUCHE
+    ============================================== -->
+
+    <section class="login-brand">
+
+        <div class="brand-header">
+
+            <div class="brand-logo">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                >
+                    <path d="M2 9l10-5 10 5-10 5L2 9z"></path>
+                    <path d="M6 11.5V16c3.5 2.5 8.5 2.5 12 0v-4.5"></path>
+                    <path d="M22 9v6"></path>
+                </svg>
+
+            </div>
+
+            <div class="brand-name">
+
+                <h1>QualiCampus</h1>
+
+                <p>
+                    Management de la qualité
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="brand-content">
+
+            <div class="brand-badge">
+                Système de Management de la Qualité
+            </div>
+
+            <h2>
+                Pilotez la qualité
+                de votre établissement.
+            </h2>
+
+            <p>
+                Une solution centralisée pour gérer les processus,
+                les documents qualité, les audits, les
+                non-conformités et les actions correctives.
+            </p>
+
+
+            <div class="features">
+
+                <div class="feature">
+
+                    <div class="feature-icon">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <path d="M9 12l2 2 4-4"></path>
+                            <circle cx="12" cy="12" r="9"></circle>
+                        </svg>
+
+                    </div>
+
+                    Traçabilité
+
+                </div>
+
+
+                <div class="feature">
+
+                    <div class="feature-icon">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <rect
+                                x="4"
+                                y="10"
+                                width="16"
+                                height="10"
+                                rx="2"
+                            ></rect>
+
+                            <path
+                                d="M8 10V7a4 4 0 018 0v3"
+                            ></path>
+                        </svg>
+
+                    </div>
+
+                    Sécurité
+
+                </div>
+
+
+                <div class="feature">
+
+                    <div class="feature-icon">
+
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <path d="M4 19V9"></path>
+                            <path d="M10 19V5"></path>
+                            <path d="M16 19v-7"></path>
+                            <path d="M22 19H2"></path>
+                        </svg>
+
+                    </div>
+
+                    Pilotage
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="brand-footer">
+            © 2026 QualiCampus — Système de management de la qualité
+        </div>
+
+    </section>
+
+
+    <!-- =============================================
+         PARTIE DROITE
+    ============================================== -->
+
+    <main class="login-section">
+
+        <div class="login-container">
+
+
+            <div class="login-header">
+
+                <h2>Bienvenue</h2>
+
+                <p>
+                    Connectez-vous à votre espace QualiCampus
+                    pour accéder au système de management
+                    de la qualité.
+                </p>
+
+            </div>
+
+
+            <!-- ERREUR AUTHENTIFICATION -->
+
+            {% if erreur %}
+
+                <div class="error-message">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M12 8v5"></path>
+                        <path d="M12 17h.01"></path>
+                    </svg>
+
+                    <span>
+                        {{ erreur }}
+                    </span>
+
+                </div>
+
+            {% endif %}
+
+
+            <!-- FORMULAIRE -->
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+
+                <!-- USERNAME -->
+
+                <div class="form-group">
+
+                    <label
+                        for="username"
+                        class="form-label"
+                    >
+                        Nom d'utilisateur
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <svg
+                            class="input-icon"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <circle cx="12" cy="8" r="4"></circle>
+                            <path
+                                d="M4 21c0-4 3.6-7 8-7s8 3 8 7"
+                            ></path>
+                        </svg>
+
+                        <input
+                            type="text"
+                            id="username"
+                            name="username"
+                            class="form-control"
+                            placeholder="Entrez votre nom d'utilisateur"
+                            autocomplete="username"
+                            required
+                            autofocus
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- PASSWORD -->
+
+                <div class="form-group">
+
+                    <label
+                        for="password"
+                        class="form-label"
+                    >
+                        Mot de passe
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <svg
+                            class="input-icon"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <rect
+                                x="4"
+                                y="10"
+                                width="16"
+                                height="10"
+                                rx="2"
+                            ></rect>
+
+                            <path
+                                d="M8 10V7a4 4 0 018 0v3"
+                            ></path>
+                        </svg>
+
+
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            class="form-control"
+                            placeholder="Entrez votre mot de passe"
+                            autocomplete="current-password"
+                            required
+                        >
+
+
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            id="passwordToggle"
+                            aria-label="Afficher le mot de passe"
+                        >
+
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                            >
+                                <path
+                                    d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"
+                                ></path>
+
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="2.5"
+                                ></circle>
+                            </svg>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- BOUTON -->
+
+                <button
+                    type="submit"
+                    class="login-button"
+                >
+
+                    Se connecter
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path d="M5 12h14"></path>
+                        <path d="M13 6l6 6-6 6"></path>
+                    </svg>
+
+                </button>
+
+            </form>
+
+
+            <div class="security-info">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <rect
+                        x="5"
+                        y="10"
+                        width="14"
+                        height="10"
+                        rx="2"
+                    ></rect>
+
+                    <path
+                        d="M8 10V7a4 4 0 018 0v3"
+                    ></path>
+                </svg>
+
+                Accès sécurisé à la plateforme QualiCampus
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+
+<script>
+
+    const passwordInput =
+        document.getElementById("password");
+
+    const passwordToggle =
+        document.getElementById("passwordToggle");
+
+
+    passwordToggle.addEventListener(
+        "click",
+        function () {
+
+            if (passwordInput.type === "password") {
+
+                passwordInput.type = "text";
+
+                passwordToggle.setAttribute(
+                    "aria-label",
+                    "Masquer le mot de passe"
+                );
+
+            } else {
+
+                passwordInput.type = "password";
+
+                passwordToggle.setAttribute(
+                    "aria-label",
+                    "Afficher le mot de passe"
+                );
+
+            }
+
+        }
+    );
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,372 @@
+{% extends 'smq/base.html' %}
+
+{% block title %}Modifier le processus - QualiCampus{% endblock %}
+
+{% block content %}
+
+<!-- =========================================================
+     FIL D'ARIANE
+     ========================================================= -->
+
+<div class="qc-breadcrumb">
+
+    <a href="{% url 'liste_processus' %}">
+        Processus
+    </a>
+
+    <span>›</span>
+
+    <strong>Modifier</strong>
+
+</div>
+
+
+<!-- =========================================================
+     TITRE
+     ========================================================= -->
+
+<section class="process-form-header">
+
+    <div class="process-form-title-icon">
+
+        <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+        >
+            <path d="M12 20h9"></path>
+
+            <path
+                d="M16.5 3.5a2.1 2.1 0 013 3L8 18l-4 1 1-4z"
+            ></path>
+        </svg>
+
+    </div>
+
+    <h1>Modifier le processus</h1>
+
+</section>
+
+
+<!-- =========================================================
+     FORMULAIRE
+     ========================================================= -->
+
+<form method="post" class="process-form-card">
+
+    {% csrf_token %}
+
+
+    <!-- ERREURS GLOBALES -->
+
+    {% if form.non_field_errors %}
+
+        <div class="process-form-global-error">
+
+            {{ form.non_field_errors }}
+
+        </div>
+
+    {% endif %}
+
+
+    <div class="process-form-grid">
+
+
+        <!-- =================================================
+             COLONNE GAUCHE
+             ================================================= -->
+
+        <div class="process-form-column">
+
+
+            <!-- NOM DU PROCESSUS -->
+
+            <div class="process-form-field">
+
+                <label for="{{ form.nom.id_for_label }}">
+
+                    Nom du processus
+
+                    <span class="required-star">
+                        *
+                    </span>
+
+                </label>
+
+
+                <input
+                    type="text"
+                    name="{{ form.nom.html_name }}"
+                    id="{{ form.nom.id_for_label }}"
+                    value="{{ form.nom.value|default_if_none:'' }}"
+                    class="process-input {% if form.nom.errors %}field-error{% endif %}"
+                    placeholder="Ex : Management de la qualité"
+                    required
+                >
+
+
+                {% for error in form.nom.errors %}
+
+                    <span class="process-error">
+                        {{ error }}
+                    </span>
+
+                {% endfor %}
+
+            </div>
+
+
+            <!-- UNITÉ ORGANISATIONNELLE -->
+
+            <div class="process-form-field">
+
+                <label for="{{ form.unite.id_for_label }}">
+
+                    Unité organisationnelle
+
+                    <span class="required-star">
+                        *
+                    </span>
+
+                </label>
+
+
+                <select
+                    name="{{ form.unite.html_name }}"
+                    id="{{ form.unite.id_for_label }}"
+                    class="process-select {% if form.unite.errors %}field-error{% endif %}"
+                    required
+                >
+
+                    <option value="">
+                        Sélectionner une unité
+                    </option>
+
+
+                    {% for value, label in form.unite.field.choices %}
+
+                        {% if value %}
+
+                            <option
+                                value="{{ value }}"
+                                {% if form.unite.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}
+                            >
+                                {{ label }}
+                            </option>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                </select>
+
+
+                {% for error in form.unite.errors %}
+
+                    <span class="process-error">
+                        {{ error }}
+                    </span>
+
+                {% endfor %}
+
+            </div>
+
+
+            <!-- PILOTE -->
+
+            <div class="process-form-field">
+
+                <label for="{{ form.pilote.id_for_label }}">
+
+                    Pilote du processus
+
+                </label>
+
+
+                <select
+                    name="{{ form.pilote.html_name }}"
+                    id="{{ form.pilote.id_for_label }}"
+                    class="process-select {% if form.pilote.errors %}field-error{% endif %}"
+                >
+
+                    <option value="">
+                        Sélectionner un pilote (optionnel)
+                    </option>
+
+
+                    {% for value, label in form.pilote.field.choices %}
+
+                        {% if value %}
+
+                            <option
+                                value="{{ value }}"
+                                {% if form.pilote.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}
+                            >
+                                {{ label }}
+                            </option>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                </select>
+
+
+                {% for error in form.pilote.errors %}
+
+                    <span class="process-error">
+                        {{ error }}
+                    </span>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             COLONNE DROITE
+             ================================================= -->
+
+        <div class="process-form-column">
+
+
+            <!-- DESCRIPTION -->
+
+            <div class="process-form-field">
+
+                <label for="{{ form.description.id_for_label }}">
+
+                    Description
+
+                </label>
+
+
+                <textarea
+                    name="{{ form.description.html_name }}"
+                    id="{{ form.description.id_for_label }}"
+                    class="process-textarea {% if form.description.errors %}field-error{% endif %}"
+                    placeholder="Décrire le processus..."
+                >{{ form.description.value|default_if_none:'' }}</textarea>
+
+
+                {% for error in form.description.errors %}
+
+                    <span class="process-error">
+                        {{ error }}
+                    </span>
+
+                {% endfor %}
+
+            </div>
+
+
+            <!-- OBJECTIF -->
+
+            <div class="process-form-field">
+
+                <label for="{{ form.objectif.id_for_label }}">
+
+                    Objectif
+
+                </label>
+
+
+                <textarea
+                    name="{{ form.objectif.html_name }}"
+                    id="{{ form.objectif.id_for_label }}"
+                    class="process-textarea process-objective-textarea {% if form.objectif.errors %}field-error{% endif %}"
+                    placeholder="Décrire l'objectif du processus..."
+                >{{ form.objectif.value|default_if_none:'' }}</textarea>
+
+
+                {% for error in form.objectif.errors %}
+
+                    <span class="process-error">
+                        {{ error }}
+                    </span>
+
+                {% endfor %}
+
+            </div>
+
+
+            <!-- STATUT -->
+
+            <div class="process-form-field">
+
+                <label for="id_actif">
+
+                    Statut
+
+                </label>
+
+
+                <select
+                    name="actif"
+                    id="id_actif"
+                    class="process-select"
+                >
+
+                    <option
+                        value="True"
+                        {% if form.actif.value != False and form.actif.value != 'False' %}selected{% endif %}
+                    >
+                        Actif
+                    </option>
+
+
+                    <option
+                        value="False"
+                        {% if form.actif.value == False or form.actif.value == 'False' %}selected{% endif %}
+                    >
+                        Inactif
+                    </option>
+
+                </select>
+
+
+                {% for error in form.actif.errors %}
+
+                    <span class="process-error">
+                        {{ error }}
+                    </span>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         BOUTONS
+         ===================================================== -->
+
+    <div class="process-form-actions">
+
+        <a
+            href="{% url 'liste_processus' %}"
+            class="process-cancel-button"
+        >
+            Annuler
+        </a>
+
+
+        <button
+            type="submit"
+            class="process-submit-button"
+        >
+            Mettre à jour
+        </button>
+
+    </div>
+
+</form>
+
+{% endblock %}

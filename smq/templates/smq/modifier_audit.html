@@ -1,0 +1,311 @@
+{% extends 'smq/base.html' %}
+
+{% block title %}
+Modifier un audit - QualiCampus
+{% endblock %}
+
+
+{% block content %}
+
+<div class="audit-create-page">
+
+
+    <!-- =====================================================
+         EN-TÊTE DE LA PAGE
+    ====================================================== -->
+
+    <div class="audit-create-header">
+
+        <div class="audit-create-heading">
+
+            <h1>
+                 Modification de l'audit
+                    
+            </h1>
+
+            <p>
+                Modifiez les informations de planification
+                de l'audit.
+            </p>
+
+        </div>
+
+
+        <a
+            href="{% url 'liste_audits' %}"
+            class="audit-back-button"
+        >
+
+            <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+            >
+                <path d="M19 12H5"></path>
+                <path d="M12 19l-7-7 7-7"></path>
+            </svg>
+
+            Retour aux audits
+
+        </a>
+
+    </div>
+
+
+    <!-- =====================================================
+         CARTE PRINCIPALE
+    ====================================================== -->
+
+    <div class="audit-create-card">
+
+
+        <!-- =================================================
+             EN-TÊTE DE LA CARTE
+        ================================================== -->
+
+        <div class="audit-create-card-header">
+
+            <div class="audit-create-card-title">
+
+                <div class="audit-create-card-icon">
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                    >
+                        <path d="M12 20h9"></path>
+
+                        <path
+                            d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"
+                        ></path>
+                    </svg>
+
+                </div>
+
+
+                <div>
+
+                    <h2>
+                        {{ audit.reference }} — {{ audit.titre }}
+                    </h2>
+
+                    <p>
+                        Informations de l'audit
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 STATUT
+            ================================================== -->
+
+            {% if audit.statut == 'PLANIFIE' %}
+
+                <span class="audit-edit-status audit-edit-status-planned">
+
+                    <span></span>
+
+                    Planifié
+
+                </span>
+
+
+            {% elif audit.statut == 'EN_COURS' %}
+
+                <span class="audit-edit-status audit-edit-status-progress">
+
+                    <span></span>
+
+                    En cours
+
+                </span>
+
+
+            {% elif audit.statut == 'TERMINE' %}
+
+                <span class="audit-edit-status audit-edit-status-finished">
+
+                    <span></span>
+
+                    Terminé
+
+                </span>
+
+
+            {% elif audit.statut == 'ANNULE' %}
+
+                <span class="audit-edit-status audit-edit-status-cancelled">
+
+                    <span></span>
+
+                    Annulé
+
+                </span>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- =================================================
+             FORMULAIRE
+        ================================================== -->
+
+        <form
+            method="post"
+            class="audit-create-form"
+        >
+
+            {% csrf_token %}
+
+
+            <!-- =================================================
+                 ERREURS GÉNÉRALES
+            ================================================== -->
+
+            {% if form.non_field_errors %}
+
+                <div class="audit-form-global-errors">
+
+                    {% for error in form.non_field_errors %}
+
+                        <p>
+                            {{ error }}
+                        </p>
+
+                    {% endfor %}
+
+                </div>
+
+            {% endif %}
+
+
+            <!-- =================================================
+                 CHAMPS DU FORMULAIRE
+            ================================================== -->
+
+            <div class="audit-form-grid">
+
+                {% for field in form %}
+
+                    <div class="audit-form-group">
+
+                        <label for="{{ field.id_for_label }}">
+
+                            {{ field.label }}
+
+                            {% if field.field.required %}
+
+                                <span class="audit-required">
+                                    *
+                                </span>
+
+                            {% endif %}
+
+                        </label>
+
+
+                        <div class="audit-field-control">
+
+                            {{ field }}
+
+                        </div>
+
+
+                        <!-- AIDE -->
+
+                        {% if field.help_text %}
+
+                            <div class="audit-field-help">
+
+                                {{ field.help_text }}
+
+                            </div>
+
+                        {% endif %}
+
+
+                        <!-- ERREURS -->
+
+                        {% if field.errors %}
+
+                            <div class="audit-field-errors">
+
+                                {% for error in field.errors %}
+
+                                    <span>
+                                        {{ error }}
+                                    </span>
+
+                                {% endfor %}
+
+                            </div>
+
+                        {% endif %}
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+
+            <!-- =================================================
+                 INFORMATION
+            ================================================== -->
+
+
+            <!-- =================================================
+                 BOUTONS
+            ================================================== -->
+
+            <div class="audit-create-actions">
+
+                <a
+                    href="{% url 'liste_audits' %}"
+                    class="audit-cancel-button"
+                >
+                    Annuler
+                </a>
+
+
+                <button
+                    type="submit"
+                    class="audit-submit-button"
+                >
+
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path
+                            d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"
+                        ></path>
+
+                        <path d="M17 21v-8H7v8"></path>
+
+                        <path d="M7 3v5h8"></path>
+
+                    </svg>
+
+                    Enregistrer les modifications
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

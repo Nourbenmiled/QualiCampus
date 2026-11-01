@@ -1,0 +1,231 @@
+{% extends 'smq/base.html' %}
+
+{% block title %}Modifier le document - QualiCampus{% endblock %}
+
+{% block content %}
+
+<div class="qc-breadcrumb">
+    <a href="{% url 'liste_documents' %}">Documents</a>
+    <span>›</span>
+    <strong>Modifier : {{ document.titre }}</strong>
+</div>
+
+<section class="document-form-header">
+    <div class="document-form-title-icon">
+        <svg viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="1.8">
+            <path d="M6 2h8l4 4v16H6z"></path>
+            <path d="M14 2v5h5"></path>
+            <path d="M9 12h6"></path>
+            <path d="M9 16h6"></path>
+        </svg>
+    </div>
+
+    <h1>Modifier le document</h1>
+</section>
+
+<form method="post" class="document-form-card">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+        <div class="document-form-global-error">
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
+
+    <div class="document-form-grid">
+
+        <!-- COLONNE GAUCHE -->
+        <div class="document-form-column">
+
+            <!-- TITRE -->
+            <div class="document-form-field">
+                <label for="{{ form.titre.id_for_label }}">
+                    Titre du document
+                    <span class="required-star">*</span>
+                </label>
+
+                <input type="text"
+                       name="{{ form.titre.html_name }}"
+                       id="{{ form.titre.id_for_label }}"
+                       value="{{ form.titre.value|default_if_none:'' }}"
+                       class="document-form-input {% if form.titre.errors %}field-error{% endif %}"
+                       required>
+
+                {% for error in form.titre.errors %}
+                    <span class="document-form-error">
+                        {{ error }}
+                    </span>
+                {% endfor %}
+            </div>
+
+            <!-- PROCESSUS -->
+            <div class="document-form-field">
+                <label for="{{ form.processus.id_for_label }}">
+                    Processus
+                    <span class="required-star">*</span>
+                </label>
+
+                <select name="{{ form.processus.html_name }}"
+                        id="{{ form.processus.id_for_label }}"
+                        class="document-form-select {% if form.processus.errors %}field-error{% endif %}"
+                        required>
+
+                    <option value="">Sélectionner un processus</option>
+
+                    {% for value, label in form.processus.field.choices %}
+                        {% if value %}
+                            <option value="{{ value }}"
+                                {% if form.processus.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+
+                {% for error in form.processus.errors %}
+                    <span class="document-form-error">
+                        {{ error }}
+                    </span>
+                {% endfor %}
+            </div>
+
+            <!-- TYPE -->
+            <div class="document-form-field">
+                <label for="{{ form.type.id_for_label }}">
+                    Type de document
+                    <span class="required-star">*</span>
+                </label>
+
+                <select name="{{ form.type.html_name }}"
+                        id="{{ form.type.id_for_label }}"
+                        class="document-form-select {% if form.type.errors %}field-error{% endif %}"
+                        required>
+
+                    <option value="">Sélectionner un type</option>
+
+                    {% for value, label in form.type.field.choices %}
+                        {% if value %}
+                            <option value="{{ value }}"
+                                {% if form.type.value == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+
+                {% for error in form.type.errors %}
+                    <span class="document-form-error">
+                        {{ error }}
+                    </span>
+                {% endfor %}
+            </div>
+
+            <!-- VERSIONS -->
+            <div class="document-form-field">
+                <label>Fichier</label>
+
+                <div class="document-version-info">
+                    <div class="document-version-info-icon">
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.8">
+                            <path d="M6 2h8l4 4v16H6z"></path>
+                            <path d="M14 2v5h5"></path>
+                            <path d="M12 11v7"></path>
+                            <path d="M8.5 14.5h7"></path>
+                        </svg>
+                    </div>
+
+                    <div>
+                        <strong>Versions conservées</strong>
+                        <span>
+                            Les fichiers et versions existants
+                            ne seront pas modifiés.
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- COLONNE DROITE -->
+        <div class="document-form-column">
+
+            <!-- DESCRIPTION -->
+            <div class="document-form-field">
+                <label for="{{ form.description.id_for_label }}">
+                    Description
+                </label>
+
+                <textarea name="{{ form.description.html_name }}"
+                          id="{{ form.description.id_for_label }}"
+                          class="document-form-textarea {% if form.description.errors %}field-error{% endif %}"
+                          placeholder="Décrire le contenu du document...">{{ form.description.value|default_if_none:'' }}</textarea>
+
+                {% for error in form.description.errors %}
+                    <span class="document-form-error">
+                        {{ error }}
+                    </span>
+                {% endfor %}
+            </div>
+
+            <!-- STATUT -->
+            <div class="document-form-field">
+                <label>Statut</label>
+
+                <div class="document-readonly-status">
+                    <span class="document-readonly-dot"></span>
+                    Brouillon
+                </div>
+            </div>
+
+            <!-- INFORMATIONS -->
+            <div class="document-form-field">
+                <label>Modification du document</label>
+
+                <div class="document-next-step">
+                    <div class="document-next-step-number">1</div>
+                    <div>
+                        <strong>Modifier les informations</strong>
+                        <span>
+                            Modifiez le titre, la description,
+                            le type ou le processus.
+                        </span>
+                    </div>
+                </div>
+
+                <div class="document-next-step">
+                    <div class="document-next-step-number">2</div>
+                    <div>
+                        <strong>Enregistrer les modifications</strong>
+                        <span>
+                            Le document restera au statut Brouillon.
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="document-form-actions">
+
+        <a href="{% url 'liste_documents' %}"
+           class="document-form-cancel">
+            Annuler
+        </a>
+
+        <button type="submit"
+                class="document-form-submit">
+            Enregistrer les modifications
+        </button>
+
+    </div>
+</form>
+
+{% endblock %}

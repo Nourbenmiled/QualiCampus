@@ -1,0 +1,351 @@
+
+{% extends 'smq/base.html' %}
+
+{% block title %}
+Modifier une unité - QualiCampus
+{% endblock %}
+
+{% block content %}
+
+<div class="uo-create-page">
+
+    <!-- =====================================================
+         EN-TÊTE
+    ====================================================== -->
+
+    <div class="uo-create-header">
+
+        <div>
+
+            <h1>
+                Modifier l'unité organisationnelle
+            </h1>
+
+            <p>
+                Modifiez les informations et le rattachement
+                hiérarchique de cette unité.
+            </p>
+
+        </div>
+
+        <a
+            href="{% url 'liste_unites' %}"
+            class="uo-create-back"
+        >
+            <span>←</span>
+            Retour
+        </a>
+
+    </div>
+
+
+    <!-- =====================================================
+         CARTE DU FORMULAIRE
+    ====================================================== -->
+
+    <div class="uo-create-card">
+
+        <!-- =================================================
+             EN-TÊTE DE LA CARTE
+        ================================================== -->
+
+        <div class="uo-create-card-header">
+
+            <div>
+
+                <h2>
+                    {{ unite.nom }}
+                </h2>
+
+                <p style="
+                    margin-top: 8px;
+                    font-size: 13px;
+                    color: #64748b;
+                ">
+
+                    {% if unite.parent %}
+
+                        Unité parente actuelle :
+                        <strong>
+                            {{ unite.parent.nom }}
+                        </strong>
+
+                    {% else %}
+
+                        Unité principale — aucun parent
+
+                    {% endif %}
+
+                </p>
+
+            </div>
+
+            <div style="
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+            ">
+
+                <span class="uo-create-badge">
+                    {{ unite.type }}
+                </span>
+
+                {% if unite.actif %}
+
+                    <span style="
+                        background: #dcfce7;
+                        color: #166534;
+                        padding: 6px 12px;
+                        border-radius: 20px;
+                        font-size: 12px;
+                        font-weight: 600;
+                    ">
+                        Active
+                    </span>
+
+                {% else %}
+
+                    <span style="
+                        background: #f1f5f9;
+                        color: #64748b;
+                        padding: 6px 12px;
+                        border-radius: 20px;
+                        font-size: 12px;
+                        font-weight: 600;
+                    ">
+                        Inactive
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             CORPS DU FORMULAIRE
+        ================================================== -->
+
+        <div class="uo-create-card-body">
+
+            <form
+                method="post"
+                class="uo-create-form"
+            >
+
+                {% csrf_token %}
+
+
+                <!-- =========================================
+                     ERREURS GÉNÉRALES
+                ========================================== -->
+
+                {% if form.non_field_errors %}
+
+                    <div class="uo-form-global-errors">
+
+                        {% for error in form.non_field_errors %}
+
+                            <p>
+                                {{ error }}
+                            </p>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+
+                <!-- =========================================
+                     CHAMPS DU FORMULAIRE
+                ========================================== -->
+
+                <div class="uo-form-grid">
+
+                    {% for field in form %}
+
+                        {% if field.is_hidden %}
+
+                            {{ field }}
+
+                        {% else %}
+
+                            <div class="uo-form-group">
+
+                                <!-- LABEL -->
+
+                                <label for="{{ field.id_for_label }}">
+
+                                    {{ field.label }}
+
+                                    {% if field.field.required %}
+
+                                        <span class="uo-required">
+                                            *
+                                        </span>
+
+                                    {% endif %}
+
+                                </label>
+
+
+                                <!-- CHAMP -->
+
+                                <div class="uo-form-control">
+
+                                    {{ field }}
+
+                                </div>
+
+
+                                <!-- AIDE POUR L'UNITÉ PARENTE -->
+
+                                {% if field.name == 'parent' %}
+
+                                    <div class="uo-form-help">
+
+                                        Sélectionnez l'unité à laquelle
+                                        cette unité doit être rattachée.
+
+                                        <p style="margin-top: 6px;">
+
+                                            Pour conserver le rattachement
+                                            actuel, ne modifiez pas
+                                            la sélection.
+
+                                        </p>
+
+                                        <p style="margin-top: 6px;">
+
+                                            Pour transformer cette unité
+                                            en unité principale,
+                                            sélectionnez :
+
+                                            <strong>
+                                                Aucune — unité principale
+                                            </strong>
+
+                                        </p>
+
+                                        <p style="margin-top: 6px;">
+
+                                            Une unité ne peut pas être
+                                            rattachée à elle-même
+                                            ni à l'une de ses sous-unités.
+
+                                        </p>
+
+                                    </div>
+
+                                {% endif %}
+
+
+                                <!-- AUTRE TEXTE D'AIDE -->
+
+                                {% if field.help_text %}
+
+                                    <div class="uo-form-help">
+
+                                        {{ field.help_text }}
+
+                                    </div>
+
+                                {% endif %}
+
+
+                                <!-- ERREURS DU CHAMP -->
+
+                                {% if field.errors %}
+
+                                    <div class="uo-form-errors">
+
+                                        {% for error in field.errors %}
+
+                                            <span>
+                                                {{ error }}
+                                            </span>
+
+                                        {% endfor %}
+
+                                    </div>
+
+                                {% endif %}
+
+                            </div>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- =========================================
+                     ACTIONS
+                ========================================== -->
+
+                <div class="uo-create-actions">
+
+                    <button
+                        type="submit"
+                        class="uo-create-submit"
+                    >
+                        Enregistrer les modifications
+                    </button>
+
+                    <a
+                        href="{% url 'liste_unites' %}"
+                        class="uo-create-cancel"
+                    >
+                        Annuler
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         INFORMATION SUR LA HIÉRARCHIE
+    ====================================================== -->
+
+    <div class="uo-create-info">
+
+        <div class="uo-create-info-icon">
+            i
+        </div>
+
+        <div>
+
+            <strong>
+                Modification de la structure organisationnelle
+            </strong>
+
+            <p>
+                Vous pouvez modifier le nom, le type,
+                la description et le rattachement hiérarchique
+                de cette unité.
+
+                Les utilisateurs, processus et audits
+                associés à cette unité restent enregistrés
+                lorsque vous modifiez son unité parente.
+
+                Pour activer ou désactiver cette unité,
+                utilisez les boutons disponibles dans
+                la liste des unités organisationnelles.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

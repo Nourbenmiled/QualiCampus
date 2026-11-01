@@ -1,0 +1,255 @@
+
+{% extends 'smq/base.html' %}
+
+{% block title %}Paramètres - QualiCampus{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+
+    <!-- EN-TÊTE -->
+    <div class="settings-header">
+        <div>
+            <h1>Paramètres</h1>
+            <p>
+                Consultez les informations de votre compte et gérez
+                la sécurité de votre accès à QualiCampus.
+            </p>
+        </div>
+    </div>
+
+    <!-- INFORMATIONS PERSONNELLES : TOUS LES RÔLES -->
+    <div class="settings-section">
+        <div class="settings-section-title">
+            <h2>Mon compte</h2>
+            <p>Informations du compte actuellement connecté.</p>
+        </div>
+
+        <div class="settings-profile-card">
+            <div class="settings-profile-avatar">
+                {{ profil.prenom|slice:':1'|upper }}{{ profil.nom|slice:':1'|upper }}
+            </div>
+
+            <div class="settings-profile-main">
+                <div class="settings-profile-name">
+                    <h3>{{ profil.prenom }} {{ profil.nom }}</h3>
+                    <span class="settings-admin-badge">
+                        {{ profil.get_role_display }}
+                    </span>
+                </div>
+
+                <div class="settings-profile-details">
+
+                    <!-- NOM D'UTILISATEUR -->
+                    <div class="settings-profile-detail">
+                        <span class="settings-detail-label">
+                            Nom d'utilisateur
+                        </span>
+                        <strong>{{ request.user.username }}</strong>
+                    </div>
+
+                    <!-- ADRESSE EMAIL -->
+                    <div class="settings-profile-detail">
+                        <span class="settings-detail-label">
+                            Adresse e-mail
+                        </span>
+                        <strong>
+                            {% if profil.email %}
+                                {{ profil.email }}
+                            {% else %}
+                                Non renseignée
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <!-- UNITÉ ORGANISATIONNELLE -->
+                    <div class="settings-profile-detail">
+                        <span class="settings-detail-label">
+                            Unité organisationnelle
+                        </span>
+                        <strong>
+                            {% if profil.unite %}
+                                {{ profil.unite.nom }}
+                            {% else %}
+                                Non attribuée
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <!-- STATUT DU COMPTE -->
+                    <div class="settings-profile-detail">
+                        <span class="settings-detail-label">
+                            Statut du compte
+                        </span>
+
+                        {% if profil.actif %}
+                            <span class="settings-status settings-status-active">
+                                <span></span>
+                                Actif
+                            </span>
+                        {% else %}
+                            <span class="settings-status settings-status-inactive">
+                                <span></span>
+                                Inactif
+                            </span>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMINISTRATION : ADMIN UNIQUEMENT -->
+    {% if profil.role == 'ADMIN' %}
+
+    <div class="settings-section">
+        <div class="settings-section-title">
+            <h2>Administration</h2>
+            <p>
+                Accédez rapidement aux fonctions
+                d'administration de la plateforme.
+            </p>
+        </div>
+
+        <div class="settings-grid">
+
+            <!-- GESTION DES UTILISATEURS -->
+            <a href="{% url 'liste_utilisateurs' %}"
+               class="settings-card">
+
+                <div class="settings-card-icon settings-icon-blue">
+                    <svg viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         aria-hidden="true">
+                        <circle cx="9" cy="8" r="3"></circle>
+                        <path d="M3 19c0-3 2.5-5 6-5s6 2 6 5"></path>
+                        <circle cx="17" cy="9" r="2"></circle>
+                        <path d="M16 14c3 0 5 1.8 5 4"></path>
+                    </svg>
+                </div>
+
+                <div class="settings-card-content">
+                    <h3>Gestion des utilisateurs</h3>
+                    <p>
+                        Gérez les comptes, les rôles,
+                        les unités et les statuts des utilisateurs.
+                    </p>
+                </div>
+
+                <span class="settings-card-arrow" aria-hidden="true">
+                    →
+                </span>
+            </a>
+
+            <!-- HISTORIQUE DES OPÉRATIONS -->
+            <a href="{% url 'liste_historique' %}"
+               class="settings-card">
+
+                <div class="settings-card-icon settings-icon-purple">
+                    <svg viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         aria-hidden="true">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M12 7v6l4 2"></path>
+                    </svg>
+                </div>
+
+                <div class="settings-card-content">
+                    <h3>Historique des opérations</h3>
+                    <p>
+                        Consultez la traçabilité des opérations
+                        réalisées dans QualiCampus.
+                    </p>
+                </div>
+
+                <span class="settings-card-arrow" aria-hidden="true">
+                    →
+                </span>
+            </a>
+
+            <!-- UNITÉS ORGANISATIONNELLES -->
+            <a href="{% url 'liste_unites' %}"
+               class="settings-card">
+
+                <div class="settings-card-icon settings-icon-green">
+                    <svg viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="1.8"
+                         aria-hidden="true">
+                        <path d="M4 21V8h8v13"></path>
+                        <path d="M12 21V3h8v18"></path>
+                        <path d="M7 11h2"></path>
+                        <path d="M7 15h2"></path>
+                        <path d="M15 7h2"></path>
+                        <path d="M15 11h2"></path>
+                    </svg>
+                </div>
+
+                <div class="settings-card-content">
+                    <h3>Unités organisationnelles</h3>
+                    <p>
+                        Consultez et gérez la structure
+                        organisationnelle de l'établissement.
+                    </p>
+                </div>
+
+                <span class="settings-card-arrow" aria-hidden="true">
+                    →
+                </span>
+            </a>
+
+        </div>
+    </div>
+
+    {% endif %}
+
+    <!-- SÉCURITÉ : TOUS LES RÔLES -->
+    <div class="settings-section">
+        <div class="settings-section-title">
+            <h2>Sécurité</h2>
+            <p>
+                Paramètres relatifs à la sécurité de votre compte.
+            </p>
+        </div>
+
+        <!-- MODIFIER SON MOT DE PASSE -->
+        <a href="{% url 'modifier_mot_de_passe' %}"
+           class="settings-security-card settings-security-link">
+
+            <div class="settings-security-icon">
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.8"
+                     aria-hidden="true">
+                    <rect x="5"
+                          y="10"
+                          width="14"
+                          height="11"
+                          rx="2"></rect>
+                    <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+                </svg>
+            </div>
+
+            <div class="settings-security-content">
+                <h3>Mot de passe</h3>
+                <p>
+                    Modifiez votre mot de passe afin de
+                    sécuriser votre compte.
+                </p>
+            </div>
+
+            <span class="settings-card-arrow" aria-hidden="true">
+                →
+            </span>
+        </a>
+
+    </div>
+
+</div>
+{% endblock %}

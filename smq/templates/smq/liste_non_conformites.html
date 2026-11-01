@@ -1,0 +1,797 @@
+
+{% extends 'smq/base.html' %}
+
+{% block title %}
+Non-conformités - QualiCampus
+{% endblock %}
+
+{% block content %}
+
+<style>
+/* ==========================================
+   BARRE DE RECHERCHE
+========================================== */
+
+.nc-search-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 18px 24px;
+    border-bottom: 1px solid #edf0f4;
+}
+
+.nc-search-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: min(100%, 510px);
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid #dce3ec;
+    border-radius: 10px;
+    background: #fff;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.nc-search-field:focus-within {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, .12);
+}
+
+.nc-search-field svg {
+    width: 19px;
+    height: 19px;
+    flex: 0 0 auto;
+    color: #64748b;
+}
+
+.nc-search-input {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    padding: 11px 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #1e293b;
+    font: inherit;
+    font-size: 14px;
+}
+
+.nc-search-input::placeholder {
+    color: #94a3b8;
+}
+
+.nc-search-count {
+    color: #64748b;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.nc-readonly-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.nc-search-empty-cell {
+    padding: 38px 16px !important;
+    text-align: center;
+    color: #64748b;
+}
+
+.nc-search-empty-cell strong {
+    display: block;
+    margin-bottom: 7px;
+    color: #334155;
+}
+
+.nc-data-row[hidden],
+.nc-search-empty-row[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 600px) {
+    .nc-search-toolbar {
+        padding: 14px;
+    }
+
+    .nc-search-field {
+        width: 100%;
+    }
+}
+</style>
+
+<div class="nc-list-page">
+
+    <!-- ======================================
+         EN-TÊTE
+    ======================================= -->
+
+    <div class="nc-list-header">
+
+        <div>
+            <h1>Gestion des non-conformités</h1>
+        </div>
+
+        <!-- CRÉATION : AUDITEUR UNIQUEMENT -->
+
+        {% if request.user.profil_smq.role == 'AUDITEUR' %}
+
+        <a
+            href="{% url 'creer_non_conformite' %}"
+            class="nc-add-button"
+        >
+            <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+            >
+                <path d="M12 5v14"></path>
+                <path d="M5 12h14"></path>
+            </svg>
+
+            Ajouter une non-conformité
+        </a>
+
+        {% endif %}
+
+    </div>
+
+    <!-- ======================================
+         CARTE PRINCIPALE
+    ======================================= -->
+
+    <div class="nc-list-card">
+
+        <div class="nc-list-card-header">
+            <div>
+                <h2>Non-conformités</h2>
+            </div>
+        </div>
+
+        <!-- ======================================
+             BARRE DE RECHERCHE
+        ======================================= -->
+
+        <div
+            class="nc-search-toolbar"
+            role="search"
+            aria-label="Rechercher une non-conformité"
+        >
+
+            <div class="nc-search-field">
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    aria-hidden="true"
+                >
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <path d="m16 16 5 5"></path>
+                </svg>
+
+                <input
+                    id="ncSearchInput"
+                    class="nc-search-input"
+                    type="text"
+                    placeholder="Référence, description, audit, gravité, statut..."
+                    aria-label="Rechercher dans les non-conformités"
+                    aria-controls="ncTableBody"
+                    autocomplete="off"
+                >
+
+            </div>
+
+            <!-- COMPTEUR -->
+
+            <span
+                id="ncSearchCount"
+                class="nc-search-count"
+                role="status"
+                aria-live="polite"
+            >
+                {{ non_conformites|length }}
+                non-conformité{{ non_conformites|length|pluralize }}
+                au total
+            </span>
+
+        </div>
+
+        <!-- ======================================
+             TABLEAU DES NON-CONFORMITÉS
+        ======================================= -->
+
+        <div class="nc-table-wrapper">
+
+            <table class="nc-table">
+
+                <thead>
+                    <tr>
+                        <th>Référence</th>
+                        <th>Description</th>
+                        <th>Audit</th>
+                        <th>Gravité</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody id="ncTableBody">
+
+                    {% for nc in non_conformites %}
+
+                    <tr
+                        class="nc-data-row"
+                        data-search="{{ nc.reference }} {{ nc.description }} {{ nc.audit.reference }} {{ nc.audit.titre }} {{ nc.gravite }} {{ nc.get_gravite_display }} {{ nc.statut }} {{ nc.get_statut_display }}"
+                    >
+
+                        <!-- RÉFÉRENCE -->
+
+                        <td>
+                            <span class="nc-reference">
+                                {{ nc.reference }}
+                            </span>
+                        </td>
+
+                        <!-- DESCRIPTION -->
+
+                        <td>
+                            <div class="nc-description">
+
+                                <div class="nc-description-icon">
+                                    NC
+                                </div>
+
+                                <span title="{{ nc.description }}">
+                                    {{ nc.description|truncatechars:80 }}
+                                </span>
+
+                            </div>
+                        </td>
+
+                        <!-- AUDIT ASSOCIÉ -->
+
+                        <td>
+
+                            {% if nc.audit %}
+
+                            <div class="nc-audit">
+
+                                <strong>
+                                    {{ nc.audit.reference }}
+                                </strong>
+
+                                <span>
+                                    {{ nc.audit.titre }}
+                                </span>
+
+                            </div>
+
+                            {% else %}
+
+                            <span class="nc-empty-value">
+                                —
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <!-- GRAVITÉ -->
+
+                        <td>
+
+                            {% if nc.gravite == 'MINEURE' %}
+
+                            <span class="nc-badge nc-gravity-minor">
+                                Mineure
+                            </span>
+
+                            {% elif nc.gravite == 'MAJEURE' %}
+
+                            <span class="nc-badge nc-gravity-major">
+                                Majeure
+                            </span>
+
+                            {% elif nc.gravite == 'CRITIQUE' %}
+
+                            <span class="nc-badge nc-gravity-critical">
+                                Critique
+                            </span>
+
+                            {% else %}
+
+                            <span class="nc-empty-value">
+                                {{ nc.get_gravite_display }}
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <!-- STATUT -->
+
+                        <td>
+
+                            {% if nc.statut == 'OUVERTE' %}
+
+                            <span class="nc-badge nc-status-open">
+                                <span class="nc-status-dot"></span>
+                                Ouverte
+                            </span>
+
+                            {% elif nc.statut == 'EN_COURS' %}
+
+                            <span class="nc-badge nc-status-progress">
+                                <span class="nc-status-dot"></span>
+                                En cours
+                            </span>
+
+                            {% elif nc.statut == 'RESOLUE' %}
+
+                            <span class="nc-badge nc-status-resolved">
+                                <span class="nc-status-dot"></span>
+                                Résolue
+                            </span>
+
+                            {% elif nc.statut == 'CLOTUREE' %}
+
+                            <span class="nc-badge nc-status-closed">
+                                <span class="nc-status-dot"></span>
+                                Clôturée
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <!-- ======================================
+                             ACTIONS SELON LE RÔLE
+                        ======================================= -->
+
+                        <td>
+
+                            <div class="nc-actions">
+
+                                <!-- ==================================
+                                     1. MODIFIER
+                                     AUDITEUR AFFECTÉ UNIQUEMENT
+                                     OUVERTE / EN_COURS
+                                =================================== -->
+
+                                {% if nc.statut == 'OUVERTE' or nc.statut == 'EN_COURS' %}
+
+                                    {% if request.user.profil_smq.role == 'AUDITEUR' and nc.audit and nc.audit.auditeur_id == request.user.profil_smq.id %}
+
+                                    <a
+                                        href="{% url 'modifier_non_conformite' nc.id %}"
+                                        class="nc-action-button nc-action-edit"
+                                        title="Modifier"
+                                    >
+
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                        >
+                                            <path d="M12 20h9"></path>
+                                            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"></path>
+                                        </svg>
+
+                                        Modifier
+
+                                    </a>
+
+                                    {% endif %}
+
+                                {% endif %}
+
+                                <!-- ==================================
+                                     2. PRENDRE EN CHARGE
+                                     RESPONSABLE QUALITÉ
+                                     OUVERTE -> EN_COURS
+                                =================================== -->
+
+                                {% if nc.statut == 'OUVERTE' %}
+
+                                    {% if request.user.profil_smq.role == 'RESP_QUALITE' %}
+
+                                    <form
+                                        method="post"
+                                        action="{% url 'demarrer_traitement_non_conformite' nc.id %}"
+                                        class="nc-inline-form"
+                                    >
+
+                                        {% csrf_token %}
+
+                                        <button
+                                            type="submit"
+                                            class="nc-action-button nc-action-start"
+                                        >
+
+                                            <svg
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                            >
+                                                <path d="M5 12h14"></path>
+                                                <path d="M13 6l6 6-6 6"></path>
+                                            </svg>
+
+                                            Prendre en charge
+
+                                        </button>
+
+                                    </form>
+
+                                    {% endif %}
+
+                                {% endif %}
+
+                                <!-- ==================================
+                                     3. RÉSOUDRE
+                                     RESPONSABLE QUALITÉ
+                                     EN_COURS -> RESOLUE
+                                =================================== -->
+
+                                {% if nc.statut == 'EN_COURS' %}
+
+                                    {% if request.user.profil_smq.role == 'RESP_QUALITE' %}
+
+                                    <form
+                                        method="post"
+                                        action="{% url 'resoudre_non_conformite' nc.id %}"
+                                        class="nc-inline-form"
+                                    >
+
+                                        {% csrf_token %}
+
+                                        <button
+                                            type="submit"
+                                            class="nc-action-button nc-action-resolve"
+                                        >
+
+                                            <svg
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                            >
+                                                <path d="M20 6L9 17l-5-5"></path>
+                                            </svg>
+
+                                            Résoudre
+
+                                        </button>
+
+                                    </form>
+
+                                    {% endif %}
+
+                                {% endif %}
+
+                                <!-- ==================================
+                                     4. REPRENDRE LE TRAITEMENT
+                                     RESPONSABLE QUALITÉ
+                                     ACTION NON EFFICACE
+                                =================================== -->
+
+                                {% if request.user.profil_smq.role == 'RESP_QUALITE' and nc.peut_reprendre %}
+
+                                <form
+                                    method="post"
+                                    action="{% url 'reprendre_traitement_non_conformite' nc.id %}"
+                                    class="nc-inline-form"
+                                >
+
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="nc-action-button nc-action-start"
+                                        onclick="return confirm('Voulez-vous reprendre le traitement de cette non-conformité ?');"
+                                    >
+
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                        >
+                                            <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+                                            <path d="M3 3v6h6"></path>
+                                        </svg>
+
+                                        Reprendre le traitement
+
+                                    </button>
+
+                                </form>
+
+                                {% endif %}
+
+                                <!-- ==================================
+                                     5. CLÔTURER
+                                     RESPONSABLE QUALITÉ UNIQUEMENT
+                                     RESOLUE -> CLOTUREE
+                                =================================== -->
+
+                                {% if nc.statut == 'RESOLUE' %}
+
+                                    {% if request.user.profil_smq.role == 'RESP_QUALITE' %}
+
+                                        {% if nc.peut_cloturer %}
+
+                                        <form
+                                            method="post"
+                                            action="{% url 'cloturer_non_conformite' nc.id %}"
+                                            class="nc-inline-form"
+                                        >
+
+                                            {% csrf_token %}
+
+                                            <button
+                                                type="submit"
+                                                class="nc-action-button nc-action-close"
+                                                onclick="return confirm('Confirmer la clôture de cette non-conformité ?');"
+                                            >
+
+                                                <svg
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    stroke-width="2"
+                                                >
+                                                    <path d="M20 6L9 17l-5-5"></path>
+                                                </svg>
+
+                                                Clôturer
+
+                                            </button>
+
+                                        </form>
+
+                                        {% else %}
+
+                                        <span
+                                            class="nc-empty-value"
+                                            title="Toutes les actions doivent être terminées et vérifiées efficaces par l'auditeur."
+                                        >
+                                            En attente de vérification
+                                        </span>
+
+                                        {% endif %}
+
+                                    {% endif %}
+
+                                {% endif %}
+
+                                <!-- ==================================
+                                     ADMINISTRATEUR
+                                     CONSULTATION UNIQUEMENT
+                                =================================== -->
+
+                                {% if request.user.profil_smq.role == 'ADMIN' %}
+
+                                <span
+                                    class="nc-readonly-note"
+                                    title="Lecture seule"
+                                >
+                                    Consultation
+                                </span>
+
+                                {% endif %}
+
+                                <!-- ==================================
+                                     6. NON-CONFORMITÉ CLÔTURÉE
+                                =================================== -->
+
+                                {% if nc.statut == 'CLOTUREE' and request.user.profil_smq.role != 'ADMIN' %}
+
+                                <span class="nc-finished">
+                                    Traitement terminé
+                                </span>
+
+                                {% endif %}
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <!-- AUCUNE NON-CONFORMITÉ -->
+
+                    <tr>
+                        <td colspan="6">
+
+                            <div class="nc-empty-state">
+
+                                <div class="nc-empty-icon">
+                                    !
+                                </div>
+
+                                <strong>
+                                    Aucune non-conformité
+                                </strong>
+
+                                <span>
+                                    Aucune non-conformité
+                                    n'a encore été enregistrée.
+                                </span>
+
+                            </div>
+
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                    <!-- ======================================
+                         AUCUN RÉSULTAT DE RECHERCHE
+                    ======================================= -->
+
+                    {% if non_conformites %}
+
+                    <tr
+                        id="ncSearchNoResults"
+                        class="nc-search-empty-row"
+                        hidden
+                    >
+
+                        <td
+                            colspan="6"
+                            class="nc-search-empty-cell"
+                        >
+
+                            <strong>
+                                Aucune non-conformité trouvée
+                            </strong>
+
+                            Essayez une autre référence,
+                            une description, un audit,
+                            une gravité ou un statut.
+
+                        </td>
+
+                    </tr>
+
+                    {% endif %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+(function () {
+
+    'use strict';
+
+    // ======================================
+    // ÉLÉMENTS
+    // ======================================
+
+    const input = document.getElementById('ncSearchInput');
+
+    const count = document.getElementById('ncSearchCount');
+
+    const emptyRow = document.getElementById('ncSearchNoResults');
+
+    const rows = Array.from(
+        document.querySelectorAll('#ncTableBody .nc-data-row')
+    );
+
+    if (!input || !count) {
+        return;
+    }
+
+    // ======================================
+    // NORMALISATION DE LA RECHERCHE
+    // ======================================
+
+    function normalize(value) {
+
+        return String(value || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLocaleLowerCase('fr')
+            .replace(/[-_]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+    }
+
+    // ======================================
+    // PRÉPARATION DES LIGNES
+    // ======================================
+
+    const searchableRows = rows.map(function (row) {
+
+        return {
+            element: row,
+            text: normalize(row.dataset.search)
+        };
+
+    });
+
+    // ======================================
+    // RECHERCHE INSTANTANÉE
+    // ======================================
+
+    function updateSearch() {
+
+        const tokens = normalize(input.value)
+            .split(' ')
+            .filter(Boolean);
+
+        let visible = 0;
+
+        searchableRows.forEach(function (item) {
+
+            const matches = tokens.every(function (token) {
+                return item.text.includes(token);
+            });
+
+            item.element.hidden = !matches;
+
+            if (matches) {
+                visible += 1;
+            }
+
+        });
+
+        // Affichage si aucun résultat
+
+        if (emptyRow) {
+            emptyRow.hidden = visible !== 0;
+        }
+
+        // Mise à jour du compteur
+
+        count.textContent =
+            visible +
+            ' résultat' +
+            (visible > 1 ? 's' : '') +
+            ' sur ' +
+            rows.length +
+            ' non-conformité' +
+            (rows.length > 1 ? 's' : '');
+
+    }
+
+    // Recherche à chaque caractère saisi
+
+    input.addEventListener('input', updateSearch);
+
+    // Initialisation
+
+    updateSearch();
+
+})();
+</script>
+
+{% endblock %}

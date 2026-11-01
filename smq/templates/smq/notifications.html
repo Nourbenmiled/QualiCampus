@@ -1,0 +1,504 @@
+
+{% extends 'smq/base.html' %}
+
+{% block title %}
+Notifications - QualiCampus
+{% endblock %}
+
+{% block content %}
+
+<div class="notifications-page">
+
+    <!-- ==========================================
+         EN-TÊTE
+    =========================================== -->
+
+    <div class="notifications-header">
+        <div>
+            <h1>Notifications</h1>
+            <p>
+                Retrouvez les éléments qui nécessitent
+                votre attention dans QualiCampus.
+            </p>
+        </div>
+
+        <span class="notifications-total">
+            {{ nombre_notifications }}
+            notification{{ nombre_notifications|pluralize }}
+        </span>
+    </div>
+
+    <!-- ==========================================
+         AUCUNE NOTIFICATION
+    =========================================== -->
+
+    {% if nombre_notifications == 0 %}
+
+        <div class="notifications-empty">
+
+            <div class="notifications-empty-icon">
+                <svg viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.8">
+                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
+                    <path d="M10 21h4"></path>
+                </svg>
+            </div>
+
+            <h2>Tout est à jour</h2>
+
+            <p>
+                Vous n'avez aucune notification
+                nécessitant votre attention.
+            </p>
+
+        </div>
+
+    {% else %}
+
+        <!-- ======================================
+             ACTIONS CORRECTIVES EN RETARD
+        ======================================= -->
+
+        {% if actions_en_retard %}
+
+            <section class="notification-section">
+
+                <div class="notification-section-header">
+                    <div>
+                        <span class="notification-category-icon notif-red">
+                            !
+                        </span>
+
+                        <div>
+                            <h2>Actions en retard</h2>
+                            <p>Échéances dépassées</p>
+                        </div>
+                    </div>
+
+                    <span class="notification-number notification-number-red">
+                        {{ actions_en_retard|length }}
+                    </span>
+                </div>
+
+                <div class="notification-list">
+
+                    {% for action in actions_en_retard %}
+
+                        <a href="{% url 'liste_actions_correctives' %}"
+                           class="notification-item">
+
+                            <span class="notification-status-dot dot-red"></span>
+
+                            <div class="notification-item-content">
+
+                                <strong>
+                                    Action corrective en retard
+                                </strong>
+
+                                <p>
+                                    {{ action.description|truncatechars:110 }}
+                                </p>
+
+                                <span class="notification-meta">
+                                    Échéance :
+                                    {{ action.date_echeance|date:"d/m/Y" }}
+
+                                    {% if action.non_conformite %}
+                                        · NC {{ action.non_conformite.reference }}
+                                    {% endif %}
+                                </span>
+
+                            </div>
+
+                            <span class="notification-arrow">→</span>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+        <!-- ======================================
+             NOUVEAUX DOCUMENTS À VALIDER
+        ======================================= -->
+
+        {% if documents_validation %}
+
+            <section class="notification-section">
+
+                <div class="notification-section-header">
+
+                    <div>
+                        <span class="notification-category-icon notif-purple">
+                            D
+                        </span>
+
+                        <div>
+                            <h2>Nouveaux documents à valider</h2>
+                            <p>Documents soumis pour approbation</p>
+                        </div>
+                    </div>
+
+                    <span class="notification-number">
+                        {{ documents_validation|length }}
+                    </span>
+
+                </div>
+
+                <div class="notification-list">
+
+                    {% for document in documents_validation %}
+
+                        <a href="{% url 'liste_versions_document' document.id %}"
+                           class="notification-item">
+
+                            <span class="notification-status-dot dot-purple"></span>
+
+                            <div class="notification-item-content">
+
+                                <strong>
+                                    {{ document.titre }}
+                                </strong>
+
+                                <p>
+                                    Nouveau document en attente de validation
+                                </p>
+
+                                <span class="notification-meta">
+
+                                    Créé le
+                                    {{ document.date_creation|date:"d/m/Y" }}
+
+                                    {% if document.auteur %}
+                                        · {{ document.auteur.prenom }}
+                                        {{ document.auteur.nom }}
+                                    {% endif %}
+
+                                    {% if document.processus %}
+                                        · {{ document.processus.nom }}
+                                    {% endif %}
+
+                                </span>
+
+                            </div>
+
+                            <span class="notification-arrow">→</span>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+        <!-- ======================================
+             VERSIONS DE DOCUMENTS À VALIDER
+        ======================================= -->
+
+        {% if versions_validation %}
+
+            <section class="notification-section">
+
+                <div class="notification-section-header">
+
+                    <div>
+                        <span class="notification-category-icon notif-purple">
+                            D
+                        </span>
+
+                        <div>
+                            <h2>Versions de documents à valider</h2>
+                            <p>Versions en attente de validation</p>
+                        </div>
+                    </div>
+
+                    <span class="notification-number">
+                        {{ versions_validation|length }}
+                    </span>
+
+                </div>
+
+                <div class="notification-list">
+
+                    {% for version in versions_validation %}
+
+                        <a href="{% url 'liste_versions_document' version.document.id %}"
+                           class="notification-item">
+
+                            <span class="notification-status-dot dot-purple"></span>
+
+                            <div class="notification-item-content">
+
+                                <strong>
+                                    {{ version.document.titre }}
+                                </strong>
+
+                                <p>
+                                    Version {{ version.numero_version }}
+                                    en attente de validation.
+                                </p>
+
+                                <span class="notification-meta">
+
+                                    Soumise le
+                                    {{ version.date_creation|date:"d/m/Y" }}
+
+                                    {% if version.document.processus %}
+                                        · {{ version.document.processus.nom }}
+                                    {% endif %}
+
+                                </span>
+
+                            </div>
+
+                            <span class="notification-arrow">→</span>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+        <!-- ======================================
+             AUDITS ACTIFS
+        ======================================= -->
+
+        {% if audits_actifs %}
+
+            <section class="notification-section">
+
+                <div class="notification-section-header">
+
+                    <div>
+                        <span class="notification-category-icon notif-blue">
+                            A
+                        </span>
+
+                        <div>
+                            <h2>Audits</h2>
+                            <p>Audits planifiés ou en cours</p>
+                        </div>
+                    </div>
+
+                    <span class="notification-number">
+                        {{ audits_actifs|length }}
+                    </span>
+
+                </div>
+
+                <div class="notification-list">
+
+                    {% for audit in audits_actifs %}
+
+                        <a href="{% url 'liste_audits' %}"
+                           class="notification-item">
+
+                            <span class="notification-status-dot dot-blue"></span>
+
+                            <div class="notification-item-content">
+
+                                <strong>
+                                    {{ audit.reference }} — {{ audit.titre }}
+                                </strong>
+
+                                <p>
+                                    {% if audit.statut == 'PLANIFIE' %}
+                                        Audit planifié
+                                    {% elif audit.statut == 'EN_COURS' %}
+                                        Audit actuellement en cours
+                                    {% endif %}
+                                </p>
+
+                                <span class="notification-meta">
+
+                                    {{ audit.date_audit|date:"d/m/Y" }}
+
+                                    {% if audit.unite %}
+                                        · {{ audit.unite.nom }}
+                                    {% endif %}
+
+                                </span>
+
+                            </div>
+
+                            <span class="notification-arrow">→</span>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+        <!-- ======================================
+             NON-CONFORMITÉS ACTIVES
+        ======================================= -->
+
+        {% if non_conformites_actives %}
+
+            <section class="notification-section">
+
+                <div class="notification-section-header">
+
+                    <div>
+                        <span class="notification-category-icon notif-orange">
+                            NC
+                        </span>
+
+                        <div>
+                            <h2>Non-conformités</h2>
+                            <p>Non-conformités nécessitant un suivi</p>
+                        </div>
+                    </div>
+
+                    <span class="notification-number">
+                        {{ non_conformites_actives|length }}
+                    </span>
+
+                </div>
+
+                <div class="notification-list">
+
+                    {% for nc in non_conformites_actives %}
+
+                        <a href="{% url 'liste_non_conformites' %}"
+                           class="notification-item">
+
+                            <span class="notification-status-dot dot-orange"></span>
+
+                            <div class="notification-item-content">
+
+                                <strong>
+                                    {{ nc.reference }}
+                                </strong>
+
+                                <p>
+                                    {{ nc.description|truncatechars:110 }}
+                                </p>
+
+                                <span class="notification-meta">
+
+                                    {% if nc.statut == 'OUVERTE' %}
+                                        Ouverte
+                                    {% elif nc.statut == 'EN_COURS' %}
+                                        En cours de traitement
+                                    {% endif %}
+
+                                    {% if nc.audit %}
+                                        · Audit {{ nc.audit.reference }}
+                                    {% endif %}
+
+                                </span>
+
+                            </div>
+
+                            <span class="notification-arrow">→</span>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+        <!-- ======================================
+             ACTIONS CORRECTIVES À SUIVRE
+        ======================================= -->
+
+        {% if actions_en_attente %}
+
+            <section class="notification-section">
+
+                <div class="notification-section-header">
+
+                    <div>
+                        <span class="notification-category-icon notif-green">
+                            AC
+                        </span>
+
+                        <div>
+                            <h2>Actions correctives</h2>
+                            <p>Actions à faire ou en cours</p>
+                        </div>
+                    </div>
+
+                    <span class="notification-number">
+                        {{ actions_en_attente|length }}
+                    </span>
+
+                </div>
+
+                <div class="notification-list">
+
+                    {% for action in actions_en_attente %}
+
+                        <a href="{% url 'liste_actions_correctives' %}"
+                           class="notification-item">
+
+                            <span class="notification-status-dot dot-green"></span>
+
+                            <div class="notification-item-content">
+
+                                <strong>
+
+                                    {% if action.statut == 'A_FAIRE' %}
+                                        Action à réaliser
+                                    {% else %}
+                                        Action en cours
+                                    {% endif %}
+
+                                </strong>
+
+                                <p>
+                                    {{ action.description|truncatechars:110 }}
+                                </p>
+
+                                <span class="notification-meta">
+
+                                    Échéance :
+                                    {{ action.date_echeance|date:"d/m/Y" }}
+
+                                    {% if action.non_conformite %}
+                                        · NC {{ action.non_conformite.reference }}
+                                    {% endif %}
+
+                                </span>
+
+                            </div>
+
+                            <span class="notification-arrow">→</span>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+        {% endif %}
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

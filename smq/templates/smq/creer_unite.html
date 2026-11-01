@@ -1,0 +1,269 @@
+
+{% extends 'smq/base.html' %}
+
+{% block title %}
+Ajouter une unité - QualiCampus
+{% endblock %}
+
+{% block content %}
+
+<div class="uo-create-page">
+
+    <!-- =====================================================
+         EN-TÊTE
+    ====================================================== -->
+
+    <div class="uo-create-header">
+
+        <div>
+
+            <h1>
+                Ajouter une unité organisationnelle
+            </h1>
+
+            <p>
+                Créez une nouvelle direction, un département,
+                un service ou une autre structure de l'établissement.
+            </p>
+
+        </div>
+
+        <a
+            href="{% url 'liste_unites' %}"
+            class="uo-create-back"
+        >
+            <span>←</span>
+            Retour
+        </a>
+
+    </div>
+
+
+    <!-- =====================================================
+         CARTE DU FORMULAIRE
+    ====================================================== -->
+
+    <div class="uo-create-card">
+
+        <!-- =================================================
+             EN-TÊTE DE LA CARTE
+        ================================================== -->
+
+        <div class="uo-create-card-header">
+
+            <div>
+
+                <h2>
+                    Informations de l'unité
+                </h2>
+
+            </div>
+
+            <span class="uo-create-badge">
+                Nouvelle unité
+            </span>
+
+        </div>
+
+
+        <!-- =================================================
+             CORPS DU FORMULAIRE
+        ================================================== -->
+
+        <div class="uo-create-card-body">
+
+            <form
+                method="post"
+                class="uo-create-form"
+            >
+
+                {% csrf_token %}
+
+
+                <!-- =========================================
+                     ERREURS GÉNÉRALES
+                ========================================== -->
+
+                {% if form.non_field_errors %}
+
+                    <div class="uo-form-global-errors">
+
+                        {% for error in form.non_field_errors %}
+
+                            <p>
+                                {{ error }}
+                            </p>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+
+                <!-- =========================================
+                     CHAMPS DU FORMULAIRE
+                ========================================== -->
+
+                <div class="uo-form-grid">
+
+                    {% for field in form %}
+
+                        {% if field.is_hidden %}
+
+                            {{ field }}
+
+                        {% else %}
+
+                            <div class="uo-form-group">
+
+                                <!-- LABEL -->
+
+                                <label for="{{ field.id_for_label }}">
+
+                                    {{ field.label }}
+
+                                    {% if field.field.required %}
+
+                                        <span class="uo-required">
+                                            *
+                                        </span>
+
+                                    {% endif %}
+
+                                </label>
+
+
+                                <!-- CHAMP -->
+
+                                <div class="uo-form-control">
+
+                                    {{ field }}
+
+                                </div>
+
+
+                                <!-- AIDE SPÉCIFIQUE À LA HIÉRARCHIE -->
+
+                                {% if field.name == 'parent' %}
+
+                                    <div class="uo-form-help">
+
+                                        Sélectionnez l'unité à laquelle
+                                        cette nouvelle unité sera rattachée.
+
+                                        <strong>
+                                            Laissez « Aucune — unité principale »
+                                            pour créer une unité sans parent.
+                                        </strong>
+
+                                    </div>
+
+                                {% endif %}
+
+
+                                <!-- AIDE DU FORMULAIRE -->
+
+                                {% if field.help_text %}
+
+                                    <div class="uo-form-help">
+
+                                        {{ field.help_text }}
+
+                                    </div>
+
+                                {% endif %}
+
+
+                                <!-- ERREURS DU CHAMP -->
+
+                                {% if field.errors %}
+
+                                    <div class="uo-form-errors">
+
+                                        {% for error in field.errors %}
+
+                                            <span>
+                                                {{ error }}
+                                            </span>
+
+                                        {% endfor %}
+
+                                    </div>
+
+                                {% endif %}
+
+                            </div>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- =========================================
+                     ACTIONS
+                ========================================== -->
+
+                <div class="uo-create-actions">
+
+                    <button
+                        type="submit"
+                        class="uo-create-submit"
+                    >
+                        Créer l'unité
+                    </button>
+
+                    <a
+                        href="{% url 'liste_unites' %}"
+                        class="uo-create-cancel"
+                    >
+                        Annuler
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         INFORMATION SUR LA HIÉRARCHIE
+    ====================================================== -->
+
+    <div class="uo-create-info">
+
+        <div class="uo-create-info-icon">
+            i
+        </div>
+
+        <div>
+
+            <strong>
+                Structure organisationnelle et hiérarchie
+            </strong>
+
+            <p>
+                Une unité organisationnelle peut être
+                une direction, un département ou un service.
+
+                Elle peut être créée comme unité principale
+                ou être rattachée à une unité existante.
+
+                Cette organisation permet de structurer
+                les processus, de répartir les responsabilités
+                et d'organiser les différents acteurs
+                du système de management de la qualité.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

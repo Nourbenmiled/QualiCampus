@@ -1,0 +1,271 @@
+{% extends 'smq/base.html' %}
+
+{% block title %}
+Modifier un utilisateur - QualiCampus
+{% endblock %}
+
+{% block content %}
+
+<div class="usr-create-page">
+
+    <!-- =====================================================
+         EN-TÊTE
+    ====================================================== -->
+
+    <div class="usr-create-header">
+
+        <div>
+
+            <h1>
+                Modifier l'utilisateur
+            </h1>
+
+        </div>
+
+
+        <a
+            href="{% url 'liste_utilisateurs' %}"
+            class="usr-create-back"
+        >
+            <span>←</span>
+            Retour
+        </a>
+
+    </div>
+
+
+    <!-- =====================================================
+         CARTE PRINCIPALE
+    ====================================================== -->
+
+    <div class="usr-create-card">
+
+
+        <!-- =================================================
+             EN-TÊTE DE LA CARTE
+        ================================================== -->
+
+        <div class="usr-create-card-header">
+
+            <div>
+
+                <h2>
+                    {{ utilisateur.prenom }} {{ utilisateur.nom }}
+                </h2>
+
+                <p>
+                    Informations du compte utilisateur
+                </p>
+
+            </div>
+
+
+            <!-- =============================================
+                 STATUT DU COMPTE
+            ============================================== -->
+
+            {% if utilisateur.actif %}
+
+                <span class="usr-status usr-status-active">
+
+                    <span class="usr-status-dot"></span>
+
+                    Compte actif
+
+                </span>
+
+            {% else %}
+
+                <span class="usr-status usr-status-inactive">
+
+                    <span class="usr-status-dot"></span>
+
+                    Compte inactif
+
+                </span>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- =================================================
+             FORMULAIRE
+        ================================================== -->
+
+        <div class="usr-create-card-body">
+
+            <form
+                method="post"
+                class="usr-create-form"
+            >
+
+                {% csrf_token %}
+
+
+                <!-- =========================================
+                     ERREURS GÉNÉRALES
+                ========================================== -->
+
+                {% if form.non_field_errors %}
+
+                    <div class="usr-form-global-errors">
+
+                        {% for error in form.non_field_errors %}
+
+                            <p>
+                                {{ error }}
+                            </p>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+
+                <!-- =========================================
+                     CHAMPS DU FORMULAIRE
+                ========================================== -->
+
+                <div class="usr-form-grid">
+
+                    {% for field in form %}
+
+
+                        {% if field.is_hidden %}
+
+                            {{ field }}
+
+
+                        {% else %}
+
+                            <div class="usr-form-group">
+
+
+                                <!-- LABEL -->
+
+                                <label for="{{ field.id_for_label }}">
+
+                                    {{ field.label }}
+
+                                    {% if field.field.required %}
+
+                                        <span class="usr-required">
+                                            *
+                                        </span>
+
+                                    {% endif %}
+
+                                </label>
+
+
+                                <!-- CHAMP -->
+
+                                <div class="usr-form-control">
+
+                                    {{ field }}
+
+                                </div>
+
+
+                                <!-- TEXTE D'AIDE -->
+
+                                {% if field.help_text %}
+
+                                    <div class="usr-form-help">
+
+                                        {{ field.help_text|safe }}
+
+                                    </div>
+
+                                {% endif %}
+
+
+                                <!-- ERREURS DU CHAMP -->
+
+                                {% if field.errors %}
+
+                                    <div class="usr-form-errors">
+
+                                        {% for error in field.errors %}
+
+                                            <span>
+                                                {{ error }}
+                                            </span>
+
+                                        {% endfor %}
+
+                                    </div>
+
+                                {% endif %}
+
+                            </div>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                </div>
+
+
+                <!-- =========================================
+                     ACTIONS
+                ========================================== -->
+
+                <div class="usr-create-actions">
+
+                    <button
+                        type="submit"
+                        class="usr-create-submit"
+                    >
+                        Enregistrer les modifications
+                    </button>
+
+
+                    <a
+                        href="{% url 'liste_utilisateurs' %}"
+                        class="usr-create-cancel"
+                    >
+                        Annuler
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         INFORMATION
+    ====================================================== -->
+
+    <div class="usr-create-info">
+
+        <div class="usr-create-info-icon">
+            i
+        </div>
+
+
+        <div>
+
+            <strong>
+                Gestion du compte
+            </strong>
+
+            <p>
+                Vous pouvez modifier les informations de l'utilisateur,
+                son rôle et son rattachement à une unité organisationnelle.
+                Les droits d'accès à QualiCampus dépendent du rôle attribué.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

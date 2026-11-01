@@ -1,0 +1,1254 @@
+
+{% extends 'smq/base.html' %}
+
+{% block title %}
+Utilisateurs - QualiCampus
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* ========================================
+       BOUTON SUPPRIMER
+    ======================================== */
+
+    .usr-action-delete {
+        background: #fff1f2;
+        color: #be123c;
+        border: 1px solid #fecdd3;
+    }
+
+    .usr-action-delete:hover {
+        background: #ffe4e6;
+    }
+
+    .usr-action-delete:focus-visible {
+        outline: 2px solid #be123c;
+        outline-offset: 2px;
+    }
+
+    /* ========================================
+       BARRE DE RECHERCHE ET FILTRES
+    ======================================== */
+
+    .usr-search-bar {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 16px 20px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .usr-search-field {
+        position: relative;
+        flex: 1 1 300px;
+        max-width: 470px;
+    }
+
+    .usr-search-field svg {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 18px;
+        height: 18px;
+        color: #64748b;
+        pointer-events: none;
+    }
+
+    .usr-search-input {
+        width: 100%;
+        box-sizing: border-box;
+        min-height: 42px;
+        padding: 10px 42px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        background: #fff;
+        color: #1f2937;
+        font: inherit;
+        outline: none;
+        transition: border-color .2s, box-shadow .2s;
+    }
+
+    .usr-search-input:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+    }
+
+    .usr-search-input::-webkit-search-cancel-button {
+        display: none;
+    }
+
+    .usr-search-clear {
+        position: absolute;
+        right: 9px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 28px;
+        height: 28px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: #64748b;
+        font-size: 21px;
+        cursor: pointer;
+    }
+
+    .usr-search-clear:hover {
+        background: #f1f5f9;
+    }
+
+    .usr-search-clear[hidden] {
+        display: none;
+    }
+
+    /* ========================================
+       FILTRES UNITÉ ET STATUT
+    ======================================== */
+
+    .usr-filter-controls {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .usr-filter-select {
+        min-height: 42px;
+        max-width: 240px;
+        padding: 9px 34px 9px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        background: #fff;
+        color: #1f2937;
+        font: inherit;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .usr-filter-select:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+    }
+
+    .usr-search-count {
+        color: #64748b;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+
+    .usr-search-empty {
+        padding: 28px 16px;
+        text-align: center;
+        color: #64748b;
+    }
+
+    @media (max-width: 600px) {
+        .usr-search-field {
+            max-width: none;
+        }
+
+        .usr-filter-controls {
+            width: 100%;
+        }
+
+        .usr-filter-select {
+            flex: 1 1 140px;
+            min-width: 0;
+        }
+    }
+</style>
+
+
+<div class="usr-list-page">
+
+    <!-- ========================================
+         EN-TÊTE
+    ======================================== -->
+
+    <div class="usr-list-header">
+
+        <div>
+            <h1>Gestion des utilisateurs</h1>
+
+            <p>
+                Gérez les comptes, les rôles et les unités
+                organisationnelles des utilisateurs.
+            </p>
+        </div>
+
+        <a
+            href="{% url 'creer_utilisateur' %}"
+            class="usr-add-button"
+        >
+            <span class="usr-add-icon">+</span>
+            Ajouter un utilisateur
+        </a>
+
+    </div>
+
+
+    <!-- ========================================
+         CARTE DES UTILISATEURS
+    ======================================== -->
+
+    <div class="usr-list-card">
+
+        <div class="usr-list-card-header">
+
+            <div>
+                <h2>Utilisateurs</h2>
+
+                <p>
+                    Liste des utilisateurs enregistrés
+                    dans la plateforme
+                </p>
+            </div>
+
+        </div>
+
+
+        <!-- ========================================
+             RECHERCHE ET FILTRES
+        ======================================== -->
+
+        <div class="usr-search-bar" role="search">
+
+            <!-- RECHERCHE -->
+
+            <div class="usr-search-field">
+
+                <label
+                    for="userSearch"
+                    style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;"
+                >
+                    Rechercher un utilisateur
+                </label>
+
+                <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    aria-hidden="true"
+                >
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <path d="m16 16 5 5"></path>
+                </svg>
+
+                <input
+                    type="search"
+                    id="userSearch"
+                    class="usr-search-input"
+                    placeholder="Rechercher par nom, email, rôle, unité..."
+                    autocomplete="off"
+                    aria-controls="userTableBody"
+                >
+
+                <button
+                    type="button"
+                    id="userSearchClear"
+                    class="usr-search-clear"
+                    title="Effacer la recherche"
+                    aria-label="Effacer la recherche"
+                    hidden
+                >
+                    &times;
+                </button>
+
+            </div>
+
+
+            <!-- FILTRES -->
+
+            <div class="usr-filter-controls">
+
+                <!-- FILTRE UNITÉ ORGANISATIONNELLE -->
+
+                <select
+                    id="userUnitFilter"
+                    class="usr-filter-select"
+                    aria-label="Filtrer par unité organisationnelle"
+                    aria-controls="userTableBody"
+                >
+                    <option value="">
+                        Toutes les unités
+                    </option>
+                </select>
+
+
+                <!-- FILTRE STATUT -->
+
+                <select
+                    id="userStatusFilter"
+                    class="usr-filter-select"
+                    aria-label="Filtrer par statut"
+                    aria-controls="userTableBody"
+                >
+                    <option value="">
+                        Tous les statuts
+                    </option>
+
+                    <option value="actif">
+                        Actifs
+                    </option>
+
+                    <option value="inactif">
+                        Inactifs
+                    </option>
+                </select>
+
+            </div>
+
+
+            <!-- NOMBRE DE RÉSULTATS -->
+
+            <span
+                id="userSearchCount"
+                class="usr-search-count"
+                role="status"
+                aria-live="polite"
+            >
+                {{ utilisateurs|length }}
+                utilisateur{{ utilisateurs|length|pluralize }}
+            </span>
+
+        </div>
+
+
+        <!-- ========================================
+             TABLEAU DES UTILISATEURS
+        ======================================== -->
+
+        <div class="usr-table-wrapper">
+
+            <table class="usr-table">
+
+                <thead>
+                    <tr>
+                        <th>Utilisateur</th>
+                        <th>Email</th>
+                        <th>Rôle</th>
+                        <th>Unité</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+
+                <tbody id="userTableBody">
+
+                    {% for utilisateur in utilisateurs %}
+
+                    <tr
+                        class="js-user-row"
+                        data-search="{{ utilisateur.prenom }} {{ utilisateur.nom }} {{ utilisateur.user.username }} {{ utilisateur.email }} {{ utilisateur.get_role_display }} {{ utilisateur.unite.nom }}"
+                        data-unit-id="{{ utilisateur.unite_id|default_if_none:'' }}"
+                        data-unit-name="{% if utilisateur.unite %}{{ utilisateur.unite.nom }}{% else %}Non attribuée{% endif %}"
+                        data-status="{% if utilisateur.actif %}actif{% else %}inactif{% endif %}"
+                    >
+
+                        <!-- ====================================
+                             UTILISATEUR
+                        ==================================== -->
+
+                        <td>
+
+                            <div class="usr-user">
+
+                                <div class="usr-avatar">
+                                    {{ utilisateur.prenom|slice:':1'|upper }}{{ utilisateur.nom|slice:':1'|upper }}
+                                </div>
+
+                                <div class="usr-user-info">
+
+                                    <strong>
+                                        {{ utilisateur.prenom }}
+                                        {{ utilisateur.nom }}
+                                    </strong>
+
+                                    {% if utilisateur.user %}
+
+                                        <span class="usr-username">
+                                            @{{ utilisateur.user.username }}
+                                        </span>
+
+                                    {% endif %}
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+                        <!-- ====================================
+                             EMAIL
+                        ==================================== -->
+
+                        <td>
+
+                            {% if utilisateur.email %}
+
+                                <span class="usr-email">
+                                    {{ utilisateur.email }}
+                                </span>
+
+                            {% else %}
+
+                                <span class="usr-empty-value">
+                                    —
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- ====================================
+                             RÔLE
+                        ==================================== -->
+
+                        <td>
+
+                            {% if utilisateur.role == 'ADMIN' %}
+
+                                <span class="usr-role-badge usr-role-admin">
+                                    Administrateur
+                                </span>
+
+                            {% elif utilisateur.role == 'RESP_QUALITE' %}
+
+                                <span class="usr-role-badge usr-role-quality">
+                                    Responsable qualité
+                                </span>
+
+                            {% elif utilisateur.role == 'RESP_DIRECTION' %}
+
+                                <span class="usr-role-badge usr-role-direction">
+                                    Responsable de direction
+                                </span>
+
+                            {% elif utilisateur.role == 'PILOTE' %}
+
+                                <span class="usr-role-badge usr-role-pilote">
+                                    Pilote de processus
+                                </span>
+
+                            {% elif utilisateur.role == 'AUDITEUR' %}
+
+                                <span class="usr-role-badge usr-role-auditeur">
+                                    Auditeur
+                                </span>
+
+                            {% elif utilisateur.role == 'CONTRIBUTEUR' %}
+
+                                <span class="usr-role-badge usr-role-contributeur">
+                                    Contributeur
+                                </span>
+
+                            {% else %}
+
+                                <span class="usr-role-badge">
+                                    {{ utilisateur.get_role_display }}
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- ====================================
+                             UNITÉ ORGANISATIONNELLE
+                        ==================================== -->
+
+                        <td>
+
+                            {% if utilisateur.unite %}
+
+                                <div class="usr-unit">
+
+                                    <span class="usr-unit-icon">
+                                        {{ utilisateur.unite.nom|slice:':1'|upper }}
+                                    </span>
+
+                                    <span>
+                                        {{ utilisateur.unite.nom }}
+                                    </span>
+
+                                </div>
+
+                            {% else %}
+
+                                <span class="usr-empty-value">
+                                    Non attribuée
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- ====================================
+                             STATUT
+                        ==================================== -->
+
+                        <td>
+
+                            {% if utilisateur.actif %}
+
+                                <span class="usr-status usr-status-active">
+
+                                    <span class="usr-status-dot"></span>
+
+                                    Actif
+
+                                </span>
+
+                            {% else %}
+
+                                <span class="usr-status usr-status-inactive">
+
+                                    <span class="usr-status-dot"></span>
+
+                                    Inactif
+
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <!-- ====================================
+                             ACTIONS
+                        ==================================== -->
+
+                        <td>
+
+                            <div class="usr-actions">
+
+                                <!-- MODIFIER -->
+
+                                <a
+                                    href="{% url 'modifier_utilisateur' utilisateur.id %}"
+                                    class="usr-action-button usr-action-edit"
+                                >
+                                    Modifier
+                                </a>
+
+
+                                {% if utilisateur.user != request.user %}
+
+                                    <!-- ACTIVER / DÉSACTIVER -->
+
+                                    <form
+                                        method="post"
+                                        action="{% url 'changer_statut_utilisateur' utilisateur.id %}"
+                                        class="usr-inline-form"
+                                        id="status-form-{{ utilisateur.id }}"
+                                    >
+
+                                        {% csrf_token %}
+
+                                        {% if utilisateur.actif %}
+
+                                            <button
+                                                type="button"
+                                                class="usr-action-button usr-action-disable js-user-action"
+                                                data-form-id="status-form-{{ utilisateur.id }}"
+                                                data-action="disable"
+                                                data-user-name="{{ utilisateur.prenom }} {{ utilisateur.nom }}"
+                                            >
+                                                Désactiver
+                                            </button>
+
+                                        {% else %}
+
+                                            <button
+                                                type="button"
+                                                class="usr-action-button usr-action-enable js-user-action"
+                                                data-form-id="status-form-{{ utilisateur.id }}"
+                                                data-action="enable"
+                                                data-user-name="{{ utilisateur.prenom }} {{ utilisateur.nom }}"
+                                            >
+                                                Activer
+                                            </button>
+
+                                        {% endif %}
+
+                                    </form>
+
+
+                                    <!-- SUPPRIMER -->
+
+                                    {% if not utilisateur.actif and not utilisateur.user.is_superuser %}
+
+                                        <form
+                                            method="post"
+                                            action="{% url 'supprimer_utilisateur' utilisateur.id %}"
+                                            class="usr-inline-form"
+                                            id="delete-form-{{ utilisateur.id }}"
+                                        >
+
+                                            {% csrf_token %}
+
+                                            <button
+                                                type="button"
+                                                class="usr-action-button usr-action-delete js-user-action"
+                                                data-form-id="delete-form-{{ utilisateur.id }}"
+                                                data-action="delete"
+                                                data-user-name="{{ utilisateur.prenom }} {{ utilisateur.nom }}"
+                                            >
+                                                Supprimer
+                                            </button>
+
+                                        </form>
+
+                                    {% endif %}
+
+                                {% else %}
+
+                                    <span class="usr-current-user">
+                                        Votre compte
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+
+                    {% empty %}
+
+                    <!-- AUCUN UTILISATEUR ENREGISTRÉ -->
+
+                    <tr>
+
+                        <td colspan="6">
+
+                            <div class="usr-empty-state">
+
+                                <div class="usr-empty-icon">
+                                    U
+                                </div>
+
+                                <strong>
+                                    Aucun utilisateur
+                                </strong>
+
+                                <span>
+                                    Aucun utilisateur n'a encore été
+                                    enregistré dans la plateforme.
+                                </span>
+
+                                <a
+                                    href="{% url 'creer_utilisateur' %}"
+                                    class="usr-empty-add"
+                                >
+                                    Ajouter un utilisateur
+                                </a>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+
+                    <!-- AUCUN RÉSULTAT DE RECHERCHE -->
+
+                    <tr
+                        id="userSearchNoResults"
+                        style="display: none;"
+                    >
+
+                        <td colspan="6">
+
+                            <div class="usr-search-empty">
+                                Aucun utilisateur ne correspond
+                                à votre recherche ou à vos filtres.
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================
+         FENÊTRE DE CONFIRMATION
+    ======================================== -->
+
+    <div
+        class="usr-status-modal"
+        id="userStatusModal"
+        aria-hidden="true"
+    >
+
+        <div class="usr-status-modal-overlay"></div>
+
+        <div
+            class="usr-status-modal-box"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="userStatusModalTitle"
+        >
+
+            <div
+                class="usr-status-modal-icon"
+                id="userStatusModalIcon"
+            >
+                !
+            </div>
+
+            <h2 id="userStatusModalTitle">
+                Confirmation
+            </h2>
+
+            <p
+                class="usr-status-modal-user"
+                id="userStatusModalUser"
+            ></p>
+
+            <p
+                class="usr-status-modal-message"
+                id="userStatusModalMessage"
+            ></p>
+
+            <div class="usr-status-modal-actions">
+
+                <button
+                    type="button"
+                    class="usr-status-modal-cancel"
+                    id="userStatusModalCancel"
+                >
+                    Annuler
+                </button>
+
+                <button
+                    type="button"
+                    class="usr-status-modal-confirm"
+                    id="userStatusModalConfirm"
+                >
+                    Confirmer
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+
+{% block scripts %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // ============================================
+    // RECHERCHE ET FILTRES
+    // ============================================
+
+    const searchInput =
+        document.getElementById('userSearch');
+
+    const clearSearch =
+        document.getElementById('userSearchClear');
+
+    const unitFilter =
+        document.getElementById('userUnitFilter');
+
+    const statusFilter =
+        document.getElementById('userStatusFilter');
+
+    const searchCount =
+        document.getElementById('userSearchCount');
+
+    const noResults =
+        document.getElementById('userSearchNoResults');
+
+    const userRows = Array.from(
+        document.querySelectorAll('.js-user-row')
+    );
+
+
+    // ============================================
+    // CHARGER AUTOMATIQUEMENT LES UNITÉS
+    // ============================================
+
+    const availableUnits = new Map();
+
+    userRows.forEach(function (row) {
+
+        const unitId =
+            row.dataset.unitId || '__none__';
+
+        const unitName =
+            row.dataset.unitName || 'Non attribuée';
+
+        if (!availableUnits.has(unitId)) {
+
+            availableUnits.set(
+                unitId,
+                unitName
+            );
+
+        }
+
+    });
+
+
+    // Trier les unités par ordre alphabétique.
+
+    Array.from(availableUnits.entries())
+
+        .sort(function (a, b) {
+
+            return a[1].localeCompare(
+                b[1],
+                'fr',
+                { sensitivity: 'base' }
+            );
+
+        })
+
+        .forEach(function (entry) {
+
+            const option =
+                document.createElement('option');
+
+            option.value = entry[0];
+
+            option.textContent = entry[1];
+
+            unitFilter.appendChild(option);
+
+        });
+
+
+    // ============================================
+    // NORMALISER LA RECHERCHE
+    // ============================================
+
+    function normalizeSearch(value) {
+
+        return (value || '')
+
+            .normalize('NFD')
+
+            .replace(/[\u0300-\u036f]/g, '')
+
+            .toLocaleLowerCase('fr')
+
+            .trim();
+
+    }
+
+
+    // ============================================
+    // FILTRER LES UTILISATEURS
+    // ============================================
+
+    function filterUsers() {
+
+        const terms = normalizeSearch(
+            searchInput.value
+        )
+            .split(/\s+/)
+            .filter(Boolean);
+
+        const selectedUnit =
+            unitFilter.value;
+
+        const selectedStatus =
+            statusFilter.value;
+
+        let visibleCount = 0;
+
+
+        userRows.forEach(function (row) {
+
+            const haystack = normalizeSearch(
+                row.dataset.search
+            );
+
+
+            // RECHERCHE TEXTE
+
+            const matchesSearch = terms.every(
+                function (term) {
+
+                    if (
+                        term === 'actif'
+                        ||
+                        term === 'inactif'
+                    ) {
+
+                        return row.dataset.status === term;
+
+                    }
+
+                    return haystack.includes(term);
+
+                }
+            );
+
+
+            // FILTRE UNITÉ
+
+            const rowUnit =
+                row.dataset.unitId || '__none__';
+
+            const matchesUnit =
+                !selectedUnit
+                ||
+                rowUnit === selectedUnit;
+
+
+            // FILTRE STATUT
+
+            const matchesStatus =
+                !selectedStatus
+                ||
+                row.dataset.status === selectedStatus;
+
+
+            // COMBINER LES TROIS CRITÈRES
+
+            const matches =
+                matchesSearch
+                &&
+                matchesUnit
+                &&
+                matchesStatus;
+
+
+            row.style.display =
+                matches ? '' : 'none';
+
+
+            if (matches) {
+                visibleCount++;
+            }
+
+        });
+
+
+        // METTRE À JOUR LE COMPTEUR
+
+        searchCount.textContent =
+            visibleCount +
+            (
+                visibleCount === 1
+                    ? ' utilisateur'
+                    : ' utilisateurs'
+            );
+
+
+        // AFFICHER LE MESSAGE AUCUN RÉSULTAT
+
+        noResults.style.display =
+            userRows.length > 0 && visibleCount === 0
+                ? ''
+                : 'none';
+
+
+        // BOUTON EFFACER
+
+        clearSearch.hidden =
+            searchInput.value.length === 0;
+
+    }
+
+
+    // RECHERCHE INSTANTANÉE
+
+    searchInput.addEventListener(
+        'input',
+        filterUsers
+    );
+
+
+    // FILTRE UNITÉ
+
+    unitFilter.addEventListener(
+        'change',
+        filterUsers
+    );
+
+
+    // FILTRE STATUT
+
+    statusFilter.addEventListener(
+        'change',
+        filterUsers
+    );
+
+
+    // EFFACER LA RECHERCHE
+
+    clearSearch.addEventListener('click', function () {
+
+        searchInput.value = '';
+
+        filterUsers();
+
+        searchInput.focus();
+
+    });
+
+
+    // ============================================
+    // FENÊTRE DE CONFIRMATION
+    // ============================================
+
+    const modal =
+        document.getElementById('userStatusModal');
+
+    const title =
+        document.getElementById('userStatusModalTitle');
+
+    const userText =
+        document.getElementById('userStatusModalUser');
+
+    const message =
+        document.getElementById('userStatusModalMessage');
+
+    const icon =
+        document.getElementById('userStatusModalIcon');
+
+    const confirmButton =
+        document.getElementById('userStatusModalConfirm');
+
+    const cancelButton =
+        document.getElementById('userStatusModalCancel');
+
+    const overlay =
+        modal.querySelector('.usr-status-modal-overlay');
+
+    let selectedForm = null;
+
+
+    // FERMER LA FENÊTRE
+
+    function closeModal() {
+
+        modal.classList.remove(
+            'usr-status-modal-visible'
+        );
+
+        modal.setAttribute(
+            'aria-hidden',
+            'true'
+        );
+
+        selectedForm = null;
+
+        confirmButton.disabled = false;
+
+    }
+
+
+    // OUVRIR LA FENÊTRE
+
+    document.querySelectorAll(
+        '.js-user-action'
+    ).forEach(function (button) {
+
+        button.addEventListener('click', function () {
+
+            const formId =
+                this.dataset.formId;
+
+            const action =
+                this.dataset.action;
+
+            const userName =
+                this.dataset.userName;
+
+
+            selectedForm =
+                document.getElementById(formId);
+
+            if (!selectedForm) {
+                return;
+            }
+
+            userText.textContent = userName;
+
+            confirmButton.disabled = false;
+
+
+            // DÉSACTIVER
+
+            if (action === 'disable') {
+
+                title.textContent =
+                    'Désactiver cet utilisateur ?';
+
+                message.textContent =
+                    "Cet utilisateur ne pourra plus se connecter à QualiCampus tant que son compte n'aura pas été réactivé.";
+
+                confirmButton.textContent =
+                    'Désactiver';
+
+                confirmButton.className =
+                    'usr-status-modal-confirm usr-status-confirm-disable';
+
+                icon.textContent = '!';
+
+                icon.className =
+                    'usr-status-modal-icon usr-status-icon-disable';
+
+            }
+
+
+            // ACTIVER
+
+            else if (action === 'enable') {
+
+                title.textContent =
+                    'Activer cet utilisateur ?';
+
+                message.textContent =
+                    'Cet utilisateur pourra de nouveau se connecter et accéder à QualiCampus.';
+
+                confirmButton.textContent =
+                    'Activer';
+
+                confirmButton.className =
+                    'usr-status-modal-confirm usr-status-confirm-enable';
+
+                icon.textContent = '✓';
+
+                icon.className =
+                    'usr-status-modal-icon usr-status-icon-enable';
+
+            }
+
+
+            // SUPPRIMER
+
+            else if (action === 'delete') {
+
+                title.textContent =
+                    'Supprimer définitivement cet utilisateur ?';
+
+                message.textContent =
+                    'Cette action est irréversible. La suppression sera refusée si le compte possède des documents, audits, historiques ou d’autres données associées.';
+
+                confirmButton.textContent =
+                    'Supprimer';
+
+                confirmButton.className =
+                    'usr-status-modal-confirm usr-status-confirm-disable';
+
+                icon.textContent = '!';
+
+                icon.className =
+                    'usr-status-modal-icon usr-status-icon-disable';
+
+            }
+
+            else {
+
+                selectedForm = null;
+
+                return;
+
+            }
+
+
+            // AFFICHER LA FENÊTRE
+
+            modal.classList.add(
+                'usr-status-modal-visible'
+            );
+
+            modal.setAttribute(
+                'aria-hidden',
+                'false'
+            );
+
+            cancelButton.focus();
+
+        });
+
+    });
+
+
+    // ANNULER
+
+    cancelButton.addEventListener(
+        'click',
+        closeModal
+    );
+
+
+    // CLIQUER SUR LE FOND
+
+    overlay.addEventListener(
+        'click',
+        closeModal
+    );
+
+
+    // TOUCHE ÉCHAP
+
+    document.addEventListener('keydown', function (event) {
+
+        if (
+            event.key === 'Escape'
+            &&
+            modal.classList.contains(
+                'usr-status-modal-visible'
+            )
+        ) {
+
+            closeModal();
+
+        }
+
+    });
+
+
+    // CONFIRMER L'ACTION
+
+    confirmButton.addEventListener('click', function () {
+
+        if (selectedForm) {
+
+            confirmButton.disabled = true;
+
+            selectedForm.submit();
+
+        }
+
+    });
+
+});
+</script>
+
+{% endblock %}

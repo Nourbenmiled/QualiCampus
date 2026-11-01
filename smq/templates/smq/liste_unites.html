@@ -1,0 +1,1880 @@
+
+{% extends 'smq/base.html' %}
+
+{% block title %}
+Unités organisationnelles - QualiCampus
+{% endblock %}
+
+{% block content %}
+
+<style>
+/* =========================================
+   PAGE PRINCIPALE
+========================================= */
+
+.uo-list-page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.uo-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+}
+
+.uo-list-header h1 {
+    margin: 0;
+    font-size: 25px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.uo-add-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 11px 17px;
+    background: #1d4ed8;
+    color: white;
+    border-radius: 9px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.uo-add-button:hover {
+    background: #1e40af;
+    color: white;
+}
+
+/* =========================================
+   ONGLETS
+========================================= */
+
+.uo-view-switch {
+    display: flex;
+    gap: 24px;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 22px;
+}
+
+.uo-view-button {
+    padding: 12px 3px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: transparent;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.uo-view-button:hover {
+    color: #1d4ed8;
+}
+
+.uo-view-button.is-selected {
+    color: #1d4ed8;
+    border-bottom-color: #1d4ed8;
+}
+
+.uo-list-page [hidden] {
+    display: none !important;
+}
+
+/* =========================================
+   CARTES PRINCIPALES
+========================================= */
+
+.uo-list-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.uo-list-card-header {
+    padding: 17px 21px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.uo-list-card-header h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+/* =========================================
+   TABLEAU
+========================================= */
+
+.uo-table-wrapper {
+    overflow-x: auto;
+}
+
+.uo-table {
+    width: 100%;
+    min-width: 930px;
+    border-collapse: collapse;
+}
+
+.uo-table th {
+    padding: 15px;
+    text-align: left;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.uo-table td {
+    padding: 15px;
+    border-top: 1px solid #f1f5f9;
+    font-size: 13px;
+    color: #334155;
+    vertical-align: middle;
+}
+
+.uo-table td strong {
+    color: #0f172a;
+}
+
+.uo-muted {
+    color: #94a3b8;
+}
+
+.uo-type-badge {
+    display: inline-block;
+    padding: 5px 9px;
+    border-radius: 7px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 12px;
+}
+
+.uo-status-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.uo-status-badge.is-active {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.uo-status-badge.is-inactive {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+/* =========================================
+   ACTIONS
+========================================= */
+
+.uo-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.uo-action-form {
+    display: inline-flex;
+    margin: 0;
+}
+
+.uo-action-button,
+.uo-action-edit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 10px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.uo-action-edit {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+}
+
+.uo-action-button.is-activate {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+}
+
+.uo-action-button.is-deactivate {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+}
+
+.uo-action-button.is-delete {
+    background: #fff1f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+}
+
+/* =========================================
+   BARRE D'OUTILS ORGANIGRAMME
+========================================= */
+
+.org-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.org-search {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: white;
+    font-size: 13px;
+    font-family: inherit;
+}
+
+.org-filter {
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: white;
+    color: #334155;
+    font-size: 13px;
+    font-family: inherit;
+}
+
+.org-toolbar-button {
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: white;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.org-toolbar-button:hover {
+    background: #f1f5f9;
+}
+
+.org-search:focus,
+.org-filter:focus {
+    outline: 2px solid #bfdbfe;
+    border-color: #2563eb;
+}
+
+/* =========================================
+   ZONE ORGANIGRAMME
+========================================= */
+
+.org-tree-area {
+    width: 100%;
+    min-height: 0;
+    overflow-x: auto;
+    overflow-y: auto;
+    background: #f8fafc;
+    scrollbar-color: #94a3b8 #e2e8f0;
+}
+
+.org-chart-stage {
+    position: relative;
+    min-height: 0;
+    isolation: isolate;
+}
+
+/* =========================================
+   NIVEAUX
+========================================= */
+
+.org-level-band {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 94px;
+    border-top: 1px solid #e9eef5;
+    border-bottom: 1px solid #e9eef5;
+    background: rgba(255, 255, 255, .7);
+    pointer-events: none;
+}
+
+.org-level-band.is-alternate {
+    background: rgba(239, 246, 255, .45);
+}
+
+.org-level-label {
+    position: absolute;
+    left: 8px;
+    display: flex;
+    align-items: center;
+    height: 26px;
+    padding: 0 7px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* =========================================
+   LIGNES DE CONNEXION
+========================================= */
+
+.org-connectors {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* =========================================
+   CARTES DES UNITÉS
+========================================= */
+
+.org-node-card {
+    position: absolute;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 148px;
+    height: 78px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, .2);
+    border-radius: 10px;
+    background: var(--branch-color, #1e3a5f);
+    color: white;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, .13);
+    z-index: 2;
+    transition: transform .15s, box-shadow .15s;
+}
+
+.org-node-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 17px rgba(15, 23, 42, .18);
+}
+
+.org-node-card.is-root {
+    background: #1e3a5f;
+}
+
+.org-node-card.is-inactive {
+    background: #64748b;
+    opacity: .82;
+}
+
+.org-node-card.is-context {
+    outline: 2px dashed #94a3b8;
+    outline-offset: 3px;
+}
+
+
+.org-node-name {
+    max-width: 100%;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+
+    display: -webkit-box;
+    line-clamp: 3;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+
+    overflow: hidden;
+}
+
+
+.org-node-type {
+    max-width: 100%;
+    font-size: 10px;
+    color: rgba(255, 255, 255, .85);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.org-node-status {
+    position: absolute;
+    top: 7px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #86efac;
+    border: 1px solid white;
+}
+
+.org-node-card.is-inactive .org-node-status {
+    background: #cbd5e1;
+}
+
+/* =========================================
+   BOUTONS DÉPLIER / REPLIER
+========================================= */
+
+.org-node-toggle {
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: white;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    border-radius: 50%;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.org-node-toggle:hover {
+    background: #eff6ff;
+}
+
+.org-empty {
+    padding: 35px 20px;
+    text-align: center;
+    color: #64748b;
+    font-size: 13px;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 700px) {
+
+    .uo-list-page {
+        padding: 14px;
+    }
+
+    .uo-list-header h1 {
+        font-size: 21px;
+    }
+
+    .uo-view-switch {
+        gap: 18px;
+    }
+
+    .org-toolbar {
+        padding: 12px;
+    }
+
+    .org-search {
+        flex-basis: 100%;
+    }
+
+}
+</style>
+
+
+<div class="uo-list-page">
+
+    <!-- =====================================
+         EN-TÊTE
+    ====================================== -->
+
+    <div class="uo-list-header">
+
+        <h1>
+            Unités organisationnelles
+        </h1>
+
+        {% if request.user.profil_smq.role == 'ADMIN' %}
+
+            <a
+                href="{% url 'creer_unite' %}"
+                class="uo-add-button"
+            >
+                + Ajouter une unité
+            </a>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- =====================================
+         ONGLETS
+    ====================================== -->
+
+    <nav
+        class="uo-view-switch"
+        aria-label="Modes d'affichage"
+    >
+
+        <button
+            type="button"
+            id="btn-vue-tableau"
+            class="uo-view-button is-selected"
+            aria-pressed="true"
+        >
+            Liste des unités
+        </button>
+
+        <button
+            type="button"
+            id="btn-vue-organigramme"
+            class="uo-view-button"
+            aria-pressed="false"
+        >
+            Organigramme
+        </button>
+
+    </nav>
+
+
+    <!-- =====================================
+         VUE LISTE
+    ====================================== -->
+
+    <section id="vue-tableau">
+
+        <div class="uo-list-card">
+
+            <div class="uo-list-card-header">
+
+                <h2>
+                    Liste des unités organisationnelles
+                </h2>
+
+            </div>
+
+            <div class="uo-table-wrapper">
+
+                <table class="uo-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>Unité</th>
+                            <th>Type</th>
+                            <th>Unité parente</th>
+                            <th>Description</th>
+                            <th>Statut</th>
+
+                            {% if request.user.profil_smq.role == 'ADMIN' %}
+                                <th>Actions</th>
+                            {% endif %}
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for unite in unites %}
+
+                            <tr>
+
+                                <!-- NOM -->
+
+                                <td>
+                                    <strong>
+                                        {{ unite.nom }}
+                                    </strong>
+                                </td>
+
+
+                                <!-- TYPE -->
+
+                                <td>
+
+                                    <span class="uo-type-badge">
+                                        {{ unite.type }}
+                                    </span>
+
+                                </td>
+
+
+                                <!-- UNITÉ PARENTE -->
+
+                                <td>
+
+                                    {% if unite.parent %}
+
+                                        {{ unite.parent.nom }}
+
+                                    {% else %}
+
+                                        <span class="uo-muted">
+                                            —
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- DESCRIPTION -->
+
+                                <td>
+
+                                    {% if unite.description %}
+
+                                        {{ unite.description|truncatechars:90 }}
+
+                                    {% else %}
+
+                                        <span class="uo-muted">
+                                            —
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- STATUT -->
+
+                                <td>
+
+                                    {% if unite.actif %}
+
+                                        <span class="uo-status-badge is-active">
+                                            Active
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="uo-status-badge is-inactive">
+                                            Inactive
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- ACTIONS -->
+
+                                {% if request.user.profil_smq.role == 'ADMIN' %}
+
+                                    <td>
+
+                                        <div class="uo-actions">
+
+                                            <!-- MODIFIER -->
+
+                                            <a
+                                                href="{% url 'modifier_unite' unite.id %}"
+                                                class="uo-action-edit"
+                                            >
+                                                Modifier
+                                            </a>
+
+
+                                            <!-- ACTIVER / DÉSACTIVER -->
+
+                                            <form
+                                                method="post"
+                                                action="{% url 'changer_statut_unite' unite.id %}"
+                                                class="uo-action-form"
+                                                onsubmit="return confirm('Confirmer le changement de statut ?');"
+                                            >
+
+                                                {% csrf_token %}
+
+                                                {% if unite.actif %}
+
+                                                    <button
+                                                        type="submit"
+                                                        class="uo-action-button is-deactivate"
+                                                    >
+                                                        Désactiver
+                                                    </button>
+
+                                                {% else %}
+
+                                                    <button
+                                                        type="submit"
+                                                        class="uo-action-button is-activate"
+                                                    >
+                                                        Activer
+                                                    </button>
+
+                                                {% endif %}
+
+                                            </form>
+
+
+                                            <!-- SUPPRIMER -->
+
+                                            <form
+                                                method="post"
+                                                action="{% url 'supprimer_unite' unite.id %}"
+                                                class="uo-action-form"
+                                                onsubmit="return confirm('Supprimer définitivement cette unité ?');"
+                                            >
+
+                                                {% csrf_token %}
+
+                                                <button
+                                                    type="submit"
+                                                    class="uo-action-button is-delete"
+                                                >
+                                                    Supprimer
+                                                </button>
+
+                                            </form>
+
+                                        </div>
+
+                                    </td>
+
+                                {% endif %}
+
+                            </tr>
+
+                        {% empty %}
+
+                            <tr>
+
+                                <td
+                                    colspan="{% if request.user.profil_smq.role == 'ADMIN' %}6{% else %}5{% endif %}"
+                                >
+
+                                    <div class="org-empty">
+                                        Aucune unité enregistrée.
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================
+         VUE ORGANIGRAMME
+    ====================================== -->
+
+    <section
+        id="vue-organigramme"
+        hidden
+    >
+
+        <div class="uo-list-card">
+
+            <!-- TITRE -->
+
+            <div class="uo-list-card-header">
+
+                <h2>
+                    Organigramme
+                </h2>
+
+            </div>
+
+
+            <!-- RECHERCHE ET FILTRES -->
+
+            <div class="org-toolbar">
+
+                <input
+                    type="search"
+                    id="org-recherche"
+                    class="org-search"
+                    placeholder="Rechercher une unité..."
+                    aria-label="Rechercher une unité"
+                >
+
+
+                <select
+                    id="org-filtre-statut"
+                    class="org-filter"
+                    aria-label="Filtrer par statut"
+                >
+
+                    <option value="tous">
+                        Tous les statuts
+                    </option>
+
+                    <option value="actives">
+                        Unités actives
+                    </option>
+
+                    <option value="inactives">
+                        Unités inactives
+                    </option>
+
+                </select>
+
+
+                <button
+                    type="button"
+                    id="org-tout-deplier"
+                    class="org-toolbar-button"
+                >
+                    Tout déplier
+                </button>
+
+
+                <button
+                    type="button"
+                    id="org-tout-replier"
+                    class="org-toolbar-button"
+                >
+                    Tout replier
+                </button>
+
+            </div>
+
+
+            <!-- ORGANIGRAMME -->
+
+            <div
+                class="org-tree-area"
+                id="org-zone"
+            >
+
+                <div
+                    id="org-arbre"
+                    class="org-chart-stage"
+                    aria-label="Organigramme des unités"
+                ></div>
+
+                <div
+                    id="org-vide"
+                    class="org-empty"
+                    hidden
+                >
+                    Aucune unité trouvée.
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================
+         DONNÉES DJANGO
+    ====================================== -->
+
+    <div
+        id="org-donnees"
+        hidden
+    >
+
+        {% for unite in unites %}
+
+            <div
+                class="org-donnee"
+                data-id="{{ unite.id }}"
+                data-parent-id="{{ unite.parent_id|default_if_none:'' }}"
+                data-nom="{{ unite.nom }}"
+                data-type="{{ unite.type }}"
+                data-description="{{ unite.description }}"
+                data-actif="{% if unite.actif %}1{% else %}0{% endif %}"
+            ></div>
+
+        {% endfor %}
+
+    </div>
+
+</div>
+
+
+<!-- =========================================
+     JAVASCRIPT
+========================================= -->
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    'use strict';
+
+    // =====================================
+    // ÉLÉMENTS
+    // =====================================
+
+    const boutonTableau = document.getElementById(
+        'btn-vue-tableau'
+    );
+
+    const boutonOrganigramme = document.getElementById(
+        'btn-vue-organigramme'
+    );
+
+    const vueTableau = document.getElementById(
+        'vue-tableau'
+    );
+
+    const vueOrganigramme = document.getElementById(
+        'vue-organigramme'
+    );
+
+    const recherche = document.getElementById(
+        'org-recherche'
+    );
+
+    const filtreStatut = document.getElementById(
+        'org-filtre-statut'
+    );
+
+    const zone = document.getElementById(
+        'org-zone'
+    );
+
+    const arbre = document.getElementById(
+        'org-arbre'
+    );
+
+    const messageVide = document.getElementById(
+        'org-vide'
+    );
+
+
+    // =====================================
+    // CHANGEMENT DE VUE
+    // =====================================
+
+    function changerVue(mode) {
+
+        const organigramme = mode === 'organigramme';
+
+        vueTableau.hidden = organigramme;
+        vueOrganigramme.hidden = !organigramme;
+
+        boutonTableau.classList.toggle(
+            'is-selected',
+            !organigramme
+        );
+
+        boutonOrganigramme.classList.toggle(
+            'is-selected',
+            organigramme
+        );
+
+        boutonTableau.setAttribute(
+            'aria-pressed',
+            String(!organigramme)
+        );
+
+        boutonOrganigramme.setAttribute(
+            'aria-pressed',
+            String(organigramme)
+        );
+
+        if (organigramme) {
+
+            afficherOrganigramme();
+
+            requestAnimationFrame(function () {
+
+                zone.scrollLeft = Math.max(
+                    0,
+                    (zone.scrollWidth - zone.clientWidth) / 2
+                );
+
+            });
+
+        }
+
+    }
+
+
+    boutonTableau.addEventListener(
+        'click',
+        function () {
+            changerVue('tableau');
+        }
+    );
+
+    boutonOrganigramme.addEventListener(
+        'click',
+        function () {
+            changerVue('organigramme');
+        }
+    );
+
+
+    // =====================================
+    // CHARGEMENT DES UNITÉS
+    // =====================================
+
+    const unites = new Map();
+
+    document.querySelectorAll(
+        '#org-donnees .org-donnee'
+    ).forEach(function (element) {
+
+        const id = Number(element.dataset.id);
+
+        const parentId = element.dataset.parentId
+            ? Number(element.dataset.parentId)
+            : null;
+
+        if (!Number.isFinite(id)) {
+            return;
+        }
+
+        unites.set(id, {
+
+            id: id,
+
+            parentId: parentId,
+
+            nom: element.dataset.nom || '',
+
+            type: element.dataset.type || '',
+
+            description: element.dataset.description || '',
+
+            actif: element.dataset.actif === '1',
+
+            enfants: []
+
+        });
+
+    });
+
+
+    // =====================================
+    // HIÉRARCHIE
+    // =====================================
+
+    function relationCyclique(unite, parent) {
+
+        const visites = new Set([unite.id]);
+
+        let courant = parent;
+
+        while (courant) {
+
+            if (visites.has(courant.id)) {
+                return true;
+            }
+
+            visites.add(courant.id);
+
+            courant = unites.get(courant.parentId);
+
+        }
+
+        return false;
+
+    }
+
+
+    const racines = [];
+
+    unites.forEach(function (unite) {
+
+        const parent = unites.get(unite.parentId);
+
+        if (
+            parent &&
+            !relationCyclique(unite, parent)
+        ) {
+
+            parent.enfants.push(unite);
+
+        } else {
+
+            racines.push(unite);
+
+        }
+
+    });
+
+
+    // =====================================
+    // TRI ALPHABÉTIQUE
+    // =====================================
+
+    function trier(liste) {
+
+        liste.sort(function (a, b) {
+
+            return a.nom.localeCompare(
+                b.nom,
+                'fr'
+            );
+
+        });
+
+        liste.forEach(function (unite) {
+
+            trier(unite.enfants);
+
+        });
+
+    }
+
+    trier(racines);
+
+
+    // =====================================
+    // FILTRES
+    // =====================================
+
+    const repliees = new Set();
+
+    const couleurs = [
+        '#0f6677',
+        '#8b3156',
+        '#176f9b',
+        '#a76b16',
+        '#38734b',
+        '#6550a5',
+        '#0f766e',
+        '#a45337'
+    ];
+
+
+    function correspond(unite) {
+
+        const texte = recherche.value
+            .trim()
+            .toLocaleLowerCase('fr');
+
+        const contenu = [
+            unite.nom,
+            unite.type,
+            unite.description
+        ].join(' ').toLocaleLowerCase('fr');
+
+        const statut = filtreStatut.value;
+
+        const texteOk = contenu.includes(texte);
+
+        const statutOk = (
+            statut === 'tous' ||
+            (statut === 'actives' && unite.actif) ||
+            (statut === 'inactives' && !unite.actif)
+        );
+
+        return texteOk && statutOk;
+
+    }
+
+
+    function contientCorrespondance(unite) {
+
+        return correspond(unite) ||
+            unite.enfants.some(contientCorrespondance);
+
+    }
+
+
+    // =====================================
+    // DIMENSIONS
+    // =====================================
+
+    const LARGEUR_CARTE = 148;
+    const HAUTEUR_CARTE = 78;
+
+    const PAS_VERTICAL = 138;
+
+    const MARGE_GAUCHE = 80;
+    const MARGE_DROITE = 16;
+
+    const MARGE_HAUTE = 25;
+    const MARGE_BASSE = 23;
+
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+
+
+    // =====================================
+    // CRÉATION DES CARTES
+    // =====================================
+
+    function creerCarte(noeud) {
+
+        const unite = noeud.unite;
+
+        const carte = document.createElement('div');
+
+        carte.className = 'org-node-card';
+
+        carte.style.left = (
+            noeud.x - LARGEUR_CARTE / 2
+        ) + 'px';
+
+        carte.style.top = noeud.y + 'px';
+
+        carte.style.setProperty(
+            '--branch-color',
+            noeud.couleur
+        );
+
+        carte.title = unite.description
+            ? unite.nom + ' — ' + unite.description
+            : unite.nom;
+
+        if (noeud.niveau === 0) {
+            carte.classList.add('is-root');
+        }
+
+        if (!unite.actif) {
+            carte.classList.add('is-inactive');
+        }
+
+        if (!correspond(unite)) {
+            carte.classList.add('is-context');
+        }
+
+
+        // NOM
+
+        const nom = document.createElement('div');
+
+        nom.className = 'org-node-name';
+        nom.textContent = unite.nom;
+
+        carte.appendChild(nom);
+
+
+        // TYPE
+
+        const type = document.createElement('div');
+
+        type.className = 'org-node-type';
+        type.textContent = unite.type || 'Unité';
+
+        carte.appendChild(type);
+
+
+        // STATUT
+
+        const statut = document.createElement('span');
+
+        statut.className = 'org-node-status';
+
+        statut.title = unite.actif
+            ? 'Active'
+            : 'Inactive';
+
+        carte.appendChild(statut);
+
+
+        // BOUTON DÉPLIER / REPLIER
+
+        if (
+            unite.enfants.some(contientCorrespondance)
+        ) {
+
+            const bouton = document.createElement('button');
+
+            const estReplie = repliees.has(unite.id);
+
+            bouton.type = 'button';
+            bouton.className = 'org-node-toggle';
+
+            bouton.textContent = estReplie
+                ? '+'
+                : '−';
+
+            bouton.setAttribute(
+                'aria-label',
+                (estReplie ? 'Déplier ' : 'Replier ') +
+                unite.nom
+            );
+
+            bouton.setAttribute(
+                'aria-expanded',
+                String(!estReplie)
+            );
+
+            bouton.addEventListener(
+                'click',
+                function () {
+
+                    if (repliees.has(unite.id)) {
+
+                        repliees.delete(unite.id);
+
+                    } else {
+
+                        repliees.add(unite.id);
+
+                    }
+
+                    afficherOrganigramme();
+
+                }
+            );
+
+            carte.appendChild(bouton);
+
+        }
+
+        return carte;
+
+    }
+
+
+    // =====================================
+    // LIGNES SVG
+    // =====================================
+
+    function ajouterChemin(svg, donnees) {
+
+        const chemin = document.createElementNS(
+            SVG_NS,
+            'path'
+        );
+
+        chemin.setAttribute('d', donnees);
+        chemin.setAttribute('fill', 'none');
+        chemin.setAttribute('stroke', '#94a3b8');
+        chemin.setAttribute('stroke-width', '2');
+        chemin.setAttribute('stroke-linejoin', 'round');
+
+        svg.appendChild(chemin);
+
+    }
+
+
+    function dessinerConnexions(svg, noeuds) {
+
+        noeuds.forEach(function (parent) {
+
+            if (!parent.enfants.length) {
+                return;
+            }
+
+            const yDepart = parent.y + HAUTEUR_CARTE;
+
+            const yArrivee = parent.enfants[0].y;
+
+            const yMilieu = (
+                yDepart + yArrivee
+            ) / 2;
+
+            const positions = parent.enfants.map(
+                function (enfant) {
+                    return enfant.x;
+                }
+            );
+
+            const xMin = Math.min(...positions);
+            const xMax = Math.max(...positions);
+
+
+            // Parent vers la ligne horizontale
+
+            ajouterChemin(
+                svg,
+                'M ' + parent.x + ' ' + yDepart +
+                ' V ' + yMilieu
+            );
+
+
+            // Ligne horizontale
+
+            if (xMin !== xMax) {
+
+                ajouterChemin(
+                    svg,
+                    'M ' + xMin + ' ' + yMilieu +
+                    ' H ' + xMax
+                );
+
+            }
+
+
+            // Ligne vers chaque enfant
+
+            parent.enfants.forEach(function (enfant) {
+
+                ajouterChemin(
+                    svg,
+                    'M ' + enfant.x + ' ' + yMilieu +
+                    ' V ' + yArrivee
+                );
+
+            });
+
+        });
+
+    }
+
+
+    // =====================================
+    // AFFICHAGE DE L'ORGANIGRAMME
+    // =====================================
+
+    function afficherOrganigramme() {
+
+        arbre.replaceChildren();
+
+        const visibles = racines.filter(
+            contientCorrespondance
+        );
+
+        const noeuds = [];
+
+        let colonneSuivante = 0;
+        let niveauMax = 0;
+
+
+        // COMPTER LES FEUILLES
+
+        function compterFeuilles(unite) {
+
+            const enfants = repliees.has(unite.id)
+                ? []
+                : unite.enfants.filter(
+                    contientCorrespondance
+                );
+
+            if (!enfants.length) {
+                return 1;
+            }
+
+            return enfants.reduce(
+                function (total, enfant) {
+
+                    return total + compterFeuilles(enfant);
+
+                },
+                0
+            );
+
+        }
+
+
+        const nombreColonnes = visibles.reduce(
+            function (total, unite) {
+
+                return total + compterFeuilles(unite);
+
+            },
+            0
+        );
+
+
+        // ESPACEMENT HORIZONTAL ADAPTATIF
+
+        const placeDisponible = Math.max(
+            0,
+            zone.clientWidth
+            - MARGE_GAUCHE
+            - MARGE_DROITE
+            - LARGEUR_CARTE
+        );
+
+        const pasHorizontal = nombreColonnes > 1
+            ? Math.min(
+                200,
+                Math.max(
+                    LARGEUR_CARTE + 12,
+                    placeDisponible / (nombreColonnes - 1)
+                )
+            )
+            : 0;
+
+
+        // POSITIONNEMENT RÉCURSIF
+
+        function placer(unite, niveau, couleur) {
+
+            const enfants = repliees.has(unite.id)
+                ? []
+                : unite.enfants.filter(
+                    contientCorrespondance
+                );
+
+            const noeud = {
+
+                unite: unite,
+                niveau: niveau,
+                couleur: couleur,
+
+                x: 0,
+
+                y: MARGE_HAUTE +
+                   niveau * PAS_VERTICAL,
+
+                enfants: []
+
+            };
+
+            niveauMax = Math.max(niveauMax, niveau);
+
+            noeuds.push(noeud);
+
+
+            enfants.forEach(function (enfant, index) {
+
+                const couleurEnfant = niveau === 0
+                    ? couleurs[index % couleurs.length]
+                    : couleur;
+
+                noeud.enfants.push(
+
+                    placer(
+                        enfant,
+                        niveau + 1,
+                        couleurEnfant
+                    )
+
+                );
+
+            });
+
+
+            if (noeud.enfants.length) {
+
+                // Parent centré sur ses enfants
+
+                noeud.x = (
+
+                    noeud.enfants[0].x +
+
+                    noeud.enfants[
+                        noeud.enfants.length - 1
+                    ].x
+
+                ) / 2;
+
+            } else {
+
+                noeud.x = (
+                    colonneSuivante * pasHorizontal
+                );
+
+                colonneSuivante++;
+
+            }
+
+            return noeud;
+
+        }
+
+
+        // UNITÉS PRINCIPALES
+
+        visibles.forEach(function (racine, index) {
+
+            placer(
+                racine,
+                0,
+                couleurs[index % couleurs.length]
+            );
+
+        });
+
+
+        // AUCUN RÉSULTAT
+
+        messageVide.hidden = noeuds.length > 0;
+
+        if (!noeuds.length) {
+
+            arbre.style.width = '100%';
+            arbre.style.height = '0px';
+
+            return;
+
+        }
+
+
+        // DIMENSIONS
+
+        const largeurContenu = (
+
+            MARGE_GAUCHE +
+
+            LARGEUR_CARTE +
+
+            Math.max(0, colonneSuivante - 1)
+                * pasHorizontal +
+
+            MARGE_DROITE
+
+        );
+
+        const largeur = Math.max(
+            zone.clientWidth,
+            largeurContenu
+        );
+
+        const hauteur = (
+
+            MARGE_HAUTE +
+
+            niveauMax * PAS_VERTICAL +
+
+            HAUTEUR_CARTE +
+
+            MARGE_BASSE
+
+        );
+
+        const surplus = Math.max(
+            0,
+            largeur - largeurContenu
+        );
+
+        const decalage = (
+
+            MARGE_GAUCHE +
+
+            LARGEUR_CARTE / 2 +
+
+            surplus / 2
+
+        );
+
+
+        noeuds.forEach(function (noeud) {
+
+            noeud.x += decalage;
+
+        });
+
+
+        arbre.style.width = largeur + 'px';
+        arbre.style.height = hauteur + 'px';
+
+
+        // BANDES DES NIVEAUX
+
+        for (
+            let niveau = 0;
+            niveau <= niveauMax;
+            niveau++
+        ) {
+
+            const y = (
+                MARGE_HAUTE +
+                niveau * PAS_VERTICAL
+            );
+
+
+            const bande = document.createElement('div');
+
+            bande.className = 'org-level-band';
+
+            if (niveau % 2 === 1) {
+
+                bande.classList.add('is-alternate');
+
+            }
+
+            bande.style.top = (y - 8) + 'px';
+
+            arbre.appendChild(bande);
+
+
+            const etiquette = document.createElement('div');
+
+            etiquette.className = 'org-level-label';
+
+            etiquette.textContent = (
+                'Niveau ' + (niveau + 1)
+            );
+
+            etiquette.style.top = (
+                y + (HAUTEUR_CARTE - 26) / 2
+            ) + 'px';
+
+            arbre.appendChild(etiquette);
+
+        }
+
+
+        // SVG DES CONNEXIONS
+
+        const svg = document.createElementNS(
+            SVG_NS,
+            'svg'
+        );
+
+        svg.setAttribute(
+            'class',
+            'org-connectors'
+        );
+
+        svg.setAttribute(
+            'width',
+            String(largeur)
+        );
+
+        svg.setAttribute(
+            'height',
+            String(hauteur)
+        );
+
+        svg.setAttribute(
+            'viewBox',
+            '0 0 ' + largeur + ' ' + hauteur
+        );
+
+        svg.setAttribute(
+            'aria-hidden',
+            'true'
+        );
+
+        dessinerConnexions(svg, noeuds);
+
+        arbre.appendChild(svg);
+
+
+        // CARTES
+
+        noeuds.forEach(function (noeud) {
+
+            arbre.appendChild(
+                creerCarte(noeud)
+            );
+
+        });
+
+    }
+
+
+    // =====================================
+    // RECHERCHE
+    // =====================================
+
+    recherche.addEventListener(
+        'input',
+        function () {
+
+            repliees.clear();
+            afficherOrganigramme();
+
+        }
+    );
+
+
+    // =====================================
+    // FILTRE STATUT
+    // =====================================
+
+    filtreStatut.addEventListener(
+        'change',
+        function () {
+
+            repliees.clear();
+            afficherOrganigramme();
+
+        }
+    );
+
+
+    // =====================================
+    // TOUT DÉPLIER
+    // =====================================
+
+    document.getElementById(
+        'org-tout-deplier'
+    ).addEventListener(
+        'click',
+        function () {
+
+            repliees.clear();
+            afficherOrganigramme();
+
+        }
+    );
+
+
+    // =====================================
+    // TOUT REPLIER
+    // =====================================
+
+    document.getElementById(
+        'org-tout-replier'
+    ).addEventListener(
+        'click',
+        function () {
+
+            unites.forEach(function (unite) {
+
+                if (unite.enfants.length) {
+
+                    repliees.add(unite.id);
+
+                }
+
+            });
+
+            afficherOrganigramme();
+
+        }
+    );
+
+
+    // =====================================
+    // RESPONSIVE
+    // =====================================
+
+    let derniereLargeur = 0;
+
+    window.addEventListener(
+        'resize',
+        function () {
+
+            if (vueOrganigramme.hidden) {
+                return;
+            }
+
+            if (zone.clientWidth !== derniereLargeur) {
+
+                derniereLargeur = zone.clientWidth;
+
+                afficherOrganigramme();
+
+            }
+
+        }
+    );
+
+});
+
+</script>
+
+{% endblock %}
