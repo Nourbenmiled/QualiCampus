@@ -180,19 +180,6 @@ python manage.py runserver
 ```
 
 
-## Sécurité
-
-QualiCampus intègre une gestion des autorisations basée sur les rôles.
-
-Les fichiers sensibles, les environnements virtuels et les bases de données locales ne doivent pas être publiés dans le dépôt GitHub.
-
-## Perspectives d'amélioration
-
-- Développement de tableaux de bord analytiques avancés.
-- Automatisation des notifications et des rappels.
-- Intégration de fonctionnalités d'intelligence artificielle.
-- Amélioration continue de l'ergonomie et des performances.
-
 ## Auteur
 
 **Nour Ben Miled**
