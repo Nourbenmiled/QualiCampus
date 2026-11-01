@@ -159,7 +159,7 @@ pip install -r requirements.txt
 
 Créer une base de données PostgreSQL et configurer les paramètres de connexion utilisés par Django.
 
-Ne pas publier les mots de passe ni les clés secrètes.
+
 
 ### 6. Appliquer les migrations
 
